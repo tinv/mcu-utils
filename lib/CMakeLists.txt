@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+
+add_subdirectory_ifdef(CONFIG_MCU_UTILS_GPIO gpio)
+add_subdirectory_ifdef(CONFIG_MCU_UTILS_CODEC codec)
+add_subdirectory_ifdef(CONFIG_MCU_UTILS_TIME time)
+add_subdirectory_ifdef(CONFIG_MCU_UTILS_UTILS utils)

@@ -1,0 +1,4 @@
+name: googletest
+build:
+  cmake: .
+  kconfig: Kconfig

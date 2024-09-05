@@ -1,0 +1,11 @@
+# Copyright (c) 2024 TecInvent Electronics Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
+menu "MCU utils libraries"
+
+rsource "gpio/Kconfig"
+rsource "codec/Kconfig"
+rsource "time/Kconfig"
+rsource "utils/Kconfig"
+
+endmenu
