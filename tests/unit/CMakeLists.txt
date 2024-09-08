@@ -28,6 +28,7 @@ set(SOURCES
 		${PRJ_DIR}/lib/utils/src/hsm.c
 		main.cpp
         codec/CobsTests.cpp
+		utils/HsmTests.cpp
 )
 
 include_directories(
