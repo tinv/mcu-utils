@@ -16,14 +16,25 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 project(mcu-utils-unit-tests)
 
+# Necessary for google test
 include_directories(AFTER SYSTEM /usr/include/c++/12 /usr/include/x86_64-linux-gnu/c++/12)
+
+cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_DIR)
+cmake_path(GET PARENT_DIR PARENT_PATH PRJ_DIR)
 
 # Add test sources
 set(SOURCES
-		../../lib/codec/src/cobs.c
+		${PRJ_DIR}/lib/codec/src/cobs.c
+		${PRJ_DIR}/lib/utils/src/hsm.c
 		main.cpp
         codec/CobsTests.cpp
 )
+
+include_directories(
+		${PRJ_DIR}/include
+		${CMAKE_SOURCE_DIR}
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${CMAKE_SOURCE_DIR}/src)
 
 # Add these sources to your target
 target_sources(app PRIVATE ${SOURCES})
@@ -31,55 +42,4 @@ target_sources(app PRIVATE ${SOURCES})
 # Link libraries
 target_link_libraries(app PUBLIC gmock gtest)
 
-
-
-# zephyr_library_include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(
-		${CMAKE_SOURCE_DIR}
-		${CMAKE_CURRENT_SOURCE_DIR}
-		${CMAKE_SOURCE_DIR}
-		${CMAKE_SOURCE_DIR}/src)
-
 add_custom_target(all_tests ALL)
-
-# Mocks
-
-list(APPEND SOURCES
-	${CMAKE_CURRENT_SOURCE_DIR}/mocks/device_mock.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/mocks/gpio_mock.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/mocks/uptime_mock.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/mocks/hsm_mock.cpp)
-
-# Test lib
-
-set(LIB_TEST_NAME ${APP_CORE_LIB}-test)
-set(TINV_TEST_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/codec/CobsTests.cpp
-	PARENT_SCOPE)
-
-# add_library(${LIB_TEST_NAME} STATIC ${LIB_TEST_SOURCES})
-
-
-# Various tests
-
-function(ADD_MU_TEST TEST_NAME TEST_SOURCES)
-	add_executable(${TEST_NAME} ${TEST_SOURCES})
-	target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(${TEST_NAME}
-		${LIB_TEST_NAME})
-	add_test(NAME ${TEST_NAME} COMMAND
-		$<TARGET_FILE:${TEST_NAME}> --gtest_output=xml:${PROJECT_BINARY_DIR}/${TEST_NAME}.xml)
-	add_dependencies(all_tests ${TEST_NAME})
-endfunction()
-	
-# ADD_MU_TEST(cobs cobs/CobsTests.cpp)
-# ADD_MU_TEST(hsm hsm/HsmTests.cpp)
-# ADD_MU_TEST(comm comm/CommTests.cpp)
-
-#if(${RUN_UNIT_TESTS})
-#    add_custom_command(TARGET all_tests
-#            COMMAND echo "Running tests" && ${CMAKE_CTEST_COMMAND} --output-on-failures
-#            POST_BUILD)
-#endif()
-
-

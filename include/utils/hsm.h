@@ -50,11 +50,11 @@ struct mu_hsmEvent
 struct mu_hsmCtrl
 {
     int currState;      ///< HSM current state
-    int nextState;          ///< HSM next state
-    int maxState;			///< Max states (just to avoid overflows)
-    int currEvent;
-    int nextEvent;
-    bool isLoop;			///< indicates if the current state is the Loop execution phase
+    int nextState;      ///< HSM next state
+    int maxState;	///< Max states (just to avoid overflows)
+    int currEvent;      ///< Current event
+    int nextEvent;      ///< Next event
+    bool isLoop;	///< indicates if the current state is the Loop execution phase
 };
 
 struct mu_hsmCtx
@@ -68,6 +68,7 @@ struct mu_hsmCtx
   int initialState;
   int maxState;
   mu_hsmCtrl_t ctrl; ///< Hsm context
+  void* userData;     ///< Pointer which will be passed to any state, when executed
 };
 
 #define MU_HSM_STATE_ALL_FN(STATE, NAME, PARENT) \
@@ -126,9 +127,34 @@ struct mu_hsmCtx
 
 struct mu_hsm_if
 {
-  int (*init)(mu_hsmCtx_t* ctx, int initialState, int maxState, void* iface);
+  /**!
+   * This function initializes the state machine and transitions to the state
+   * @p initialState
+   * @param ctx User initialized state machine context
+   * @param initialState Initial state
+   * @param maxState Max value state
+   * @return Return 0 on success
+   */
+  int (*init)(mu_hsmCtx_t* ctx, int initialState, int maxState);
+
+  /**!
+   * To be called when state transition should be handled
+   * @param ctx State machine context
+   */
   void (*handleStateTransition)(mu_hsmCtx_t* ctx);
+
+  /**!
+   * To be called when loop function should be executed
+   * @param ctx State machine context
+   */
   void (*handleStateLoop)( mu_hsmCtx_t* ctx );
+
+  /**!
+   * Get event name given its @p event value
+   * @param ctx State machine context
+   * @param event Event value
+   * @return Returns the corresponding event name
+   */
   const char* (*getEventName)( const mu_hsmCtx_t* ctx, int event );
 };
 

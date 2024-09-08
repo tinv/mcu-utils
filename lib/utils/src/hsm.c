@@ -7,23 +7,19 @@
 LOG_MODULE_REGISTER(mu_hsm);
 #include <string.h>
 
-static int _updateNextTransition(hsmCtx_t* ctx);
-static int _execEntry(hsmCtx_t* ctx);
-static int _execExit(hsmCtx_t* ctx);
-static int _execLoop(hsmCtx_t* ctx);
-static const hsmState_t* _getState(const hsmCtx_t* ctx, int state);
+static int _updateNextTransition(mu_hsmCtx_t* ctx);
+static int _execEntry(mu_hsmCtx_t* ctx);
+static int _execExit(mu_hsmCtx_t* ctx);
+static int _execLoop(mu_hsmCtx_t* ctx);
+static const mu_hsmState_t* _getState(const mu_hsmCtx_t* ctx, int state);
 
-static void* _iface;
-
-int hsm_init(hsmCtx_t* ctx, int initialState, int maxState, void* iface)
+int hsm_init(mu_hsmCtx_t* ctx, int initialState, int maxState)
 {
     int ret = 0;
-    memset(&ctx->ctrl, 0, sizeof(hsmCtrl_t));
+    memset(&ctx->ctrl, 0, sizeof(mu_hsmCtrl_t));
     ctx->ctrl.currState = initialState;
     ctx->ctrl.maxState = maxState;
     ctx->ctrl.currEvent = ctx->ctrl.nextEvent = NO_EVENT;
-
-    _iface = iface;
 
     // Execute very first entry function
    if ((ret = _execEntry(ctx)) >= 0)
@@ -35,7 +31,7 @@ int hsm_init(hsmCtx_t* ctx, int initialState, int maxState, void* iface)
     return ret;
 }
 
-void hsm_handleStateTransition(hsmCtx_t* ctx)
+void hsm_handleStateTransition(mu_hsmCtx_t* ctx)
 {
 
     if (ctx->ctrl.nextEvent >= 0 || ctx->ctrl.nextEvent == ANY_EVENT)
@@ -66,7 +62,7 @@ void hsm_handleStateTransition(hsmCtx_t* ctx)
     }
 }
 
-void hsm_handleStateLoop( hsmCtx_t* ctx )
+void hsm_handleStateLoop( mu_hsmCtx_t* ctx )
 {
     if ( ctx->ctrl.isLoop )
     {
@@ -74,7 +70,7 @@ void hsm_handleStateLoop( hsmCtx_t* ctx )
     }
 }
 
-const char* hsm_getEventName( const hsmCtx_t* ctx, int event )
+const char* hsm_getEventName( const mu_hsmCtx_t* ctx, int event )
 {
     __ASSERT_NO_MSG( ctx );
 
@@ -88,11 +84,11 @@ const char* hsm_getEventName( const hsmCtx_t* ctx, int event )
     return NULL;
 }
 
-static int _updateNextTransition( hsmCtx_t* ctx )
+static int _updateNextTransition( mu_hsmCtx_t* ctx )
 {
     __ASSERT_NO_MSG( ctx );
-    const hsmState_t* st               = _getState( ctx, ctx->ctrl.currState );
-    bool              switchedToParent = false;
+    const mu_hsmState_t* st = _getState( ctx, ctx->ctrl.currState );
+    bool switchedToParent = false;
 
     do
     {
@@ -126,34 +122,34 @@ static int _updateNextTransition( hsmCtx_t* ctx )
     return -ENOTR;
 }
 
-static int _execEntry(hsmCtx_t* ctx)
+static int _execEntry(mu_hsmCtx_t* ctx)
 {
     for (int i = 0; i < ctx->statesSize; i++)
     {
         if (ctx->ctrl.currState == ctx->states[i].state  && ctx->states[i].entry != 0)
         {
             LOG_INF("st %s", ctx->states[i].name);
-            ctx->states[i].entry( _iface );
+            ctx->states[i].entry( ctx->userData );
             return 0;
         }
     }
     return -ENOENTRYFN;
 }
 
-static int _execExit(hsmCtx_t* ctx)
+static int _execExit(mu_hsmCtx_t* ctx)
 {
     for (int i = 0; i < ctx->statesSize; i++)
     {
         if (ctx->ctrl.currState == ctx->states[i].state && ctx->states[i].exit != 0) {
             LOG_INF( "st %s exit", ctx->states[i].name );
-            ctx->states[i].exit( _iface );
+            ctx->states[i].exit( ctx->userData );
             return 0;
         }
     }
     return -ENOEXITFN;
 }
 
-static int _execLoop(hsmCtx_t* ctx)
+static int _execLoop(mu_hsmCtx_t* ctx)
 {
     __ASSERT_NO_MSG(ctx);
 
@@ -167,7 +163,7 @@ static int _execLoop(hsmCtx_t* ctx)
             if (ctx->states[i].loop != 0)
             {
                 // Execute and evaluate new event
-                newEvent = ctx->states[i].loop( _iface );
+                newEvent = ctx->states[i].loop( ctx->userData );
                 if (newEvent != NO_EVENT)
                 {
                     if (newEvent != ANY_EVENT)
@@ -191,7 +187,7 @@ static int _execLoop(hsmCtx_t* ctx)
     return -ENOSTATE;
 }
 
-static const hsmState_t* _getState(const hsmCtx_t* ctx, int state)
+static const mu_hsmState_t* _getState(const mu_hsmCtx_t* ctx, int state)
 {
     for (int i = 0; i < ctx->statesSize; i++)
     {
