@@ -7,5 +7,6 @@ rsource "gpio/Kconfig"
 rsource "codec/Kconfig"
 rsource "time/Kconfig"
 rsource "utils/Kconfig"
+rsource "leds/Kconfig"
 
 endmenu
