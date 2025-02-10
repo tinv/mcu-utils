@@ -1,5 +1,6 @@
 // Copyright 2022 TecInvent Electronics Ltd
 
+
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER( mu_gpio );
