@@ -259,6 +259,7 @@ static void _set_out_state( const struct mu_output_def* out, const int active )
     {
         data->running = false;
     }
+    LOG_DBG("Set %s to %s", out->config.name, active ? "Active" : "Inactive");
     gpio_pin_set_dt( &out->config.dt, active );
 }
 
