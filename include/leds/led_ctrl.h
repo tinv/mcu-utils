@@ -8,11 +8,13 @@
 
 #include <stdint.h>
 #include <zephyr/sys/util.h>
-#include <zephyr/device.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define MU_LED_CTRL_BRIGHTNESS_MAX    100
+#define MU_LED_CTRL_COLOR_MAX         255
 
 typedef enum led_effect {
   led_effect_none,
@@ -31,10 +33,19 @@ typedef struct led_dev {
   led_buf_t color;
 } led_dev_t;
 
+typedef struct led_dev2 {
+  const struct device *dev;
+  led_buf_t *brightness;
+} led_dev2_t;
+
 struct mu_led_ctrl_if
 {
-  int (*setBrightness)(const led_dev_t *dev, const led_effect_t effect);
-  int (*setColor)(const led_dev_t *dev, const led_effect_t effect);
+  int (*getDevQty)(void);
+  int (*setBrightness)(const uint8_t idx, const uint8_t led_num, const uint8_t value);
+  int (*setBrightnessAll)(const uint8_t idx, const uint8_t value);
+  int (*setColor)(const uint8_t idx, const uint8_t led_num, const uint8_t red, const uint8_t green, const uint8_t blue);
+  int (*setColorAll)(const uint8_t idx, const uint8_t red, const uint8_t green, const uint8_t blue);
+  int (*update)(const uint8_t idx, const led_effect_t effect);
 };
 
 extern struct mu_led_ctrl_if muLedCtrl;
