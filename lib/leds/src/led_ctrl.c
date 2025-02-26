@@ -10,8 +10,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/device.h>
 
-// #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
-#define LOG_LEVEL LOG_LEVEL_INF
+#define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(mu_led_ctrl);
 
