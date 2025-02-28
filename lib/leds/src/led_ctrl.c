@@ -312,7 +312,8 @@ static int led_ctrl_set_color_all(const uint8_t idx, const uint8_t red, const ui
   return 0;
 }
 
-static int led_ctrl_update(const uint8_t idx, const led_effect_t effect)
+static int led_ctrl_update(const uint8_t idx,
+                           const led_effect_t effect)
 {
   __ASSERT( idx >= ARRAY_SIZE(led_devs), "idx is greater than led_devs len" );
   int ret = 0;
@@ -321,70 +322,78 @@ static int led_ctrl_update(const uint8_t idx, const led_effect_t effect)
 
   for(int i = 0; i < data->module_size; i++) {
 
-    /* Update colors */
-    for (int j = 0; j < data->module[i].color.size; j++) {
+    if (data->color_update_pending) {
 
-      k_mutex_lock(&data->lock, K_FOREVER);
+      /* Update colors */
+      for (int j = 0; j < data->module[i].color.size; j++) {
 
-      if (effect == led_effect_fade) {
+        k_mutex_lock(&data->lock, K_FOREVER);
 
-        if (data->module[i].color.current[j] < data->module[i].color.target[j]) {
-          data->module[i].color.current[j]++;
-        } else if (data->module[i].color.current[j] > data->module[i].color.target[j]) {
-          data->module[i].color.current[j]--;
+        if (effect == led_effect_fade) {
+
+          if (data->module[i].color.current[j] < data->module[i].color.target[j]) {
+            data->module[i].color.current[j]++;
+          } else if (data->module[i].color.current[j] > data->module[i].color.target[j]) {
+            data->module[i].color.current[j]--;
+          } else {
+            data->module[i].color.current[j] = data->module[i].color.target[j];
+          }
+
         } else {
           data->module[i].color.current[j] = data->module[i].color.target[j];
         }
 
-      } else {
-        data->module[i].color.current[j] = data->module[i].color.target[j];
-      }
+        if ((j % 3) == 0) {
+          if ((ret = led_set_color(config->dev,
+                                   data->module[i].index,
+                                   data->module[i].color.size,
+                                   &data->module[i].color.current[j != 0 ? j-3 : 0])) < 0)
+          {
+            k_mutex_unlock(&data->lock);
+            LOG_ERR("Unable to set color err %d", ret);
+            break;
+          }
 
-      if ((j % 3) == 0) {
-        if ((ret = led_set_color(config->dev,
-                                 data->module[i].index,
-                                 data->module[i].color.size,
-                                 &data->module[i].color.current[j != 0 ? j-3 : 0])) < 0)
-        {
-          k_mutex_unlock(&data->lock);
-          LOG_ERR("Unable to set color err %d", ret);
-          break;
         }
 
-      }
+        k_mutex_unlock(&data->lock);
 
-      k_mutex_unlock(&data->lock);
+      }
 
     }
 
-    /* Update brightness */
-    for (int j = 0; j < data->module[i].brightness.size; j++) {
+    if (data->brightness_update_pending) {
 
-      k_mutex_lock(&data->lock, K_FOREVER);
+      /* Update brightness */
+      for (int j = 0; j < data->module[i].brightness.size; j++) {
 
-      if (effect == led_effect_fade) {
+        k_mutex_lock(&data->lock, K_FOREVER);
 
-        if (data->module[i].brightness.current[j] < data->module[i].brightness.target[j]) {
-          data->module[i].brightness.current[j]++;
-        } else if (data->module[i].brightness.current[j] > data->module[i].brightness.target[j]) {
-          data->module[i].brightness.current[j]--;
+        if (effect == led_effect_fade) {
+
+          if (data->module[i].brightness.current[j] < data->module[i].brightness.target[j]) {
+            data->module[i].brightness.current[j]++;
+          } else if (data->module[i].brightness.current[j] > data->module[i].brightness.target[j]) {
+            data->module[i].brightness.current[j]--;
+          } else {
+            data->module[i].brightness.current[j] = data->module[i].brightness.target[j];
+          }
+
         } else {
           data->module[i].brightness.current[j] = data->module[i].brightness.target[j];
         }
 
-      } else {
-        data->module[i].brightness.current[j] = data->module[i].brightness.target[j];
-      }
+        if ((ret = led_set_brightness(config->dev, i,
+                                      data->module[i].brightness.current[j])) <
+            0) {
+          k_mutex_unlock(&data->lock);
+          LOG_ERR("Unable to set brightness err %d", ret);
+          break;
+        }
 
-      if ((ret = led_set_brightness(config->dev, i,
-                                    data->module[i].brightness.current[j])) <
-          0) {
         k_mutex_unlock(&data->lock);
-        LOG_ERR("Unable to set brightness err %d", ret);
-        break;
-      }
 
-      k_mutex_unlock(&data->lock);
+      }
 
     }
 
