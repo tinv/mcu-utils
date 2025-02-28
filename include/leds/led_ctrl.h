@@ -33,13 +33,14 @@ typedef struct led_dev {
   led_buf_t color;
 } led_dev_t;
 
-typedef struct led_dev2 {
-  const struct device *dev;
-  led_buf_t *brightness;
-} led_dev2_t;
+/**!
+ *
+ */
+typedef void (*led_ctrl_finished_cb)(const uint8_t idx);
 
 struct mu_led_ctrl_if
 {
+  int (*init)(led_ctrl_finished_cb finished_cb);
   int (*getDevQty)(void);
   int (*setBrightness)(const uint8_t idx, const uint8_t led_num, const uint8_t value);
   int (*setBrightnessAll)(const uint8_t idx, const uint8_t value);
