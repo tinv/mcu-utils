@@ -228,17 +228,12 @@ static int led_ctrl_set_brightness(const uint8_t idx, const uint8_t led_num, con
   __ASSERT( idx >= ARRAY_SIZE(led_devs), "idx is greater than led_devs len" );
   struct led_ctrl_data *data = &led_devs[idx].data;
 
-  for (int i = 0; i < data->module_size; i++) {
-    if (data->module[i].index == led_num) {
-      k_mutex_lock(&data->lock, K_FOREVER);
-      data->brightness_update_pending = true;
-      data->module[i].brightness.target[0] = value <= MU_LED_CTRL_BRIGHTNESS_MAX ? value : MU_LED_CTRL_BRIGHTNESS_MAX;
-      k_mutex_unlock(&data->lock);
-      return 0;
-    }
-  }
+  k_mutex_lock(&data->lock, K_FOREVER);
+  data->brightness_update_pending = true;
+  data->module[led_num].brightness.target[0] = value <= MU_LED_CTRL_BRIGHTNESS_MAX ? value : MU_LED_CTRL_BRIGHTNESS_MAX;
+  k_mutex_unlock(&data->lock);
+  return 0;
 
-  return -EINVAL;
 }
 
 static int led_ctrl_set_brightness_all(const uint8_t idx, const uint8_t value)
@@ -263,27 +258,22 @@ static int led_ctrl_set_color(const uint8_t idx, const uint8_t led_num, const ui
   __ASSERT( idx >= ARRAY_SIZE(led_devs), "idx is greater than led_devs len" );
   struct led_ctrl_data *data = &led_devs[idx].data;
 
-  for (int i = 0; i < data->module_size; i++) {
-    if (data->module[i].index == led_num) {
-      k_mutex_lock(&data->lock, K_FOREVER);
-      data->color_update_pending = true;
+  k_mutex_lock(&data->lock, K_FOREVER);
+  data->color_update_pending = true;
 
-      switch (data->module[i].color.size) {
-      case 3:
-        data->module[i].color.target[2] = blue <= MU_LED_CTRL_COLOR_MAX ? blue : MU_LED_CTRL_COLOR_MAX;
-      case 2:
-        data->module[i].color.target[1] = green <= MU_LED_CTRL_COLOR_MAX ? green : MU_LED_CTRL_COLOR_MAX;
-      case 1:
-        data->module[i].color.target[0] = red <= MU_LED_CTRL_COLOR_MAX ? red : MU_LED_CTRL_COLOR_MAX;
-      default:
-        break;
-      }
-      k_mutex_unlock(&data->lock);
-      return 0;
-    }
+  switch (data->module[led_num].color.size) {
+  case 3:
+    data->module[led_num].color.target[2] = blue <= MU_LED_CTRL_COLOR_MAX ? blue : MU_LED_CTRL_COLOR_MAX;
+  case 2:
+    data->module[led_num].color.target[1] = green <= MU_LED_CTRL_COLOR_MAX ? green : MU_LED_CTRL_COLOR_MAX;
+  case 1:
+    data->module[led_num].color.target[0] = red <= MU_LED_CTRL_COLOR_MAX ? red : MU_LED_CTRL_COLOR_MAX;
+  default:
+    break;
   }
+  k_mutex_unlock(&data->lock);
+  return 0;
 
-  return -EINVAL;
 }
 
 static int led_ctrl_set_color_all(const uint8_t idx, const uint8_t red, const uint8_t green, const uint8_t blue)
@@ -345,7 +335,7 @@ static int led_ctrl_update(const uint8_t idx,
 
         if ((j % 3) == 0) {
           if ((ret = led_set_color(config->dev,
-                                   data->module[i].index,
+                                   i,
                                    data->module[i].color.size,
                                    &data->module[i].color.current[j != 0 ? j-3 : 0])) < 0)
           {
