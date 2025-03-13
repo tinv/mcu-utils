@@ -9,5 +9,6 @@ rsource "time/Kconfig"
 rsource "utils/Kconfig"
 rsource "leds/Kconfig"
 rsource "storage/Kconfig"
+rsource "adc/Kconfig"
 
 endmenu
