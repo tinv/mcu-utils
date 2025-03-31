@@ -5,7 +5,7 @@ Library containing useful code that can be used in Zephyr projects. It is necess
 to install necessary tools and libraries. See https://www.zephyrproject.org for more info.
 
 ## Creating workspace
-``west init -m ssh://git@bitbucket.co.tinv.ch:7999/libs/mcu-utils.git --mr master mcu-utils_workspace``
+``west init -m ssh://git@github.com:tinv/mcu-utils.git --mr master mcu-utils_workspace``
 <br/>
 ``cd mcu-utils_workspace``
 <br/>
