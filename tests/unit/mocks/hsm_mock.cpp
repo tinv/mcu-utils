@@ -3,32 +3,33 @@
 #include "hsm_mock.h"
 #include <hsm.h>
 
-MuHsmMock* MuHsmMockObj = nullptr;
+MuHsmMock *MuHsmMockObj = nullptr;
 
-static int init(mu_hsmCtx_t* ctx, int initialState, int maxState, void* iface)
+static int init(mu_hsmCtx_t *ctx, int initialState, int maxState)
 {
-  return MuHsmMockObj->init( ctx, initialState, maxState, iface );
+	return MuHsmMockObj->init(ctx, initialState, maxState);
 }
 
-static void handleStateTransition(mu_hsmCtx_t* ctx)
+static void handleStateTransition(mu_hsmCtx_t *ctx)
 {
-  return MuHsmMockObj->handleStateTransition( ctx );
+	return MuHsmMockObj->handleStateTransition(ctx);
 }
 
-static void handleStateLoop( mu_hsmCtx_t* ctx )
+static void handleStateLoop(mu_hsmCtx_t *ctx)
 {
-  return MuHsmMockObj->handleStateLoop( ctx );
+	return MuHsmMockObj->handleStateLoop(ctx);
 }
 
-static const char* getEventName( const mu_hsmCtx_t* ctx, int event )
+static const char *getEventName(const mu_hsmCtx_t *ctx, int event)
 {
-  return MuHsmMockObj->getEventName( ctx, event );
+	return MuHsmMockObj->getEventName(ctx, event);
 }
 
-const struct mu_hsm_if muHsmMock =
-{
-  .init = init,
-  .handleStateTransition = handleStateTransition
-  .handleStateLoop = handleStateLoop
-  .getEventName = getEventName
+const struct mu_hsm_if muHsmMock = {
+
+	.init = init,
+	.handleStateTransition = handleStateTransition,
+	.handleStateLoop = handleStateLoop,
+	.getEventName = getEventName
+
 };

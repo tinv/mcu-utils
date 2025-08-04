@@ -29,14 +29,18 @@ set(SOURCES
 		main.cpp
         codec/CobsTests.cpp
 		utils/HsmTests.cpp
+		mocks/hsm_fn_mock.cpp
 )
 
 include_directories(
 		${PRJ_DIR}/include
 		${CMAKE_SOURCE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}
-		${CMAKE_SOURCE_DIR}/src)
-
+		${CMAKE_SOURCE_DIR}/src
+		utils/
+		mocks/
+)
+target_compile_definitions(app PRIVATE GTEST_HAS_PTHREAD=0)
 # Add these sources to your target
 target_sources(app PRIVATE ${SOURCES})
 
