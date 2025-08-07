@@ -1,13 +1,13 @@
-#include "tinv_uptime_mock.h"
+#include "uptime_mock.h"
 
-TinvUptimeMock* TinvUptimeMockObj = nullptr;
+MuUptimeMock* MuUptimeMockObj = nullptr;
 
 int64_t uptime_get()
 {
-    return TinvUptimeMockObj->uptime_get();
+    return MuUptimeMockObj->uptime_get();
 }
 
-const struct tinv_uptime_if tinvUptimeMock =
+const struct mu_uptime_if muUptimeMock =
 {
     .uptime_get = uptime_get
 };
