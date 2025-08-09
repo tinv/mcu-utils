@@ -10,7 +10,7 @@ class MuGpioInterface
 {
 public:
     virtual ~MuGpioInterface() {}
-    virtual int init( struct tinv_input_def* in, struct tinv_output_def* out ) = 0;
+    virtual int init(struct mu_input_def* in, struct mu_output_def* out) = 0;
     virtual int getMaxId() = 0;
     virtual const char* getInName( int id ) = 0;
     virtual const char* getOutName( int id ) = 0;
