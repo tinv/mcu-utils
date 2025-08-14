@@ -4,4 +4,6 @@
 zephyr_library()
 zephyr_library_sources(
         src/led_ctrl.c
+        src/led_rgb.c
+        src/led_single.c
 )
