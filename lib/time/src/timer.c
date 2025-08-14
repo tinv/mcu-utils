@@ -39,7 +39,7 @@ static uint32_t timer_remaining_get(timer_handle_t *handle)
 	return k_timer_remaining_get(&handle->timer);
 }
 
-struct mu_timer_if muTimer = {
+const struct mu_timer_if muTimer = {
 	.init = timer_init,
 	.start = timer_start,
 	.stop = timer_stop,

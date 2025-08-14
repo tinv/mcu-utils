@@ -23,7 +23,7 @@ struct mu_timer_if
 	uint32_t (*remaining_get)(timer_handle_t *handle);
 };
 
-extern struct mu_timer_if muTimer;
+extern const struct mu_timer_if muTimer;
 
 #ifdef __cplusplus
 }
