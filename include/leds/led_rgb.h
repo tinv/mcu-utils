@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <leds/led_ctrl.h>
+#include <time/timer.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,9 +20,23 @@ struct mu_led_rgb_pos_map {
 	uint8_t dt_pos;
 };
 
-struct mu_led_rgb_if {
-	int (*init)(const struct mu_led_ctrl_if *led_ctrl);
+typedef void (*led_rgb_finished_cb)(void);
 
+struct mu_led_rgb_if {
+	/**
+	 * Initilizes the RGB led sub-system
+	 * @param led_ctrl LED controller interface
+	 * @param muTimer Timer interface
+	 * @return Returns 0 on success, otherwise it returns a negative number
+	 */
+	int (*init)(const struct mu_led_ctrl_if *led_ctrl, const struct mu_timer_if* muTimer);
+
+	/**
+	 *
+	 * @param map
+	 * @param size
+	 * @return
+	 */
 	int (*setMap)(const struct mu_led_rgb_pos_map *map, size_t size);
 
 	/**!
@@ -31,11 +46,25 @@ struct mu_led_rgb_if {
 	 * @param green Green color value
 	 * @param blue Blue color value
 	 * @param brightness Brightness level
-	 * @retval Returns 0 on success
+	 * @param timeMs
+	 * @param cb User callback invoked once animation is completed
+	 * @retval Returns 0 on success otherwise it returns a negative number
 	 */
 	int (*setSingle)(unsigned int num, uint8_t red, uint8_t green, uint8_t blue,
-			 uint8_t brightness);
-	int (*setAll)(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness);
+			 uint8_t brightness, const int timeMs, led_rgb_finished_cb cb);
+
+	/**
+	 * Sets all LEDs
+	 * @param red Red channel value
+	 * @param green Green channel value
+	 * @param blue Blue channel value
+	 * @param brightness Brightness
+	 * @param timeMs
+	 * @param cb User callback invoked once animation is completed
+	 * @return Return 0 on success, otherwise it returns a negative number
+	 */
+	int (*setAll)(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness, const int timeMs,
+		      led_rgb_finished_cb cb);
 };
 
 extern const struct mu_led_rgb_if muLedRgb;

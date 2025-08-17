@@ -42,11 +42,11 @@ struct mu_led_ctrl_if
 {
   int (*init)(led_ctrl_finished_cb finished_cb);
   int (*getDevQty)(void);
-  int (*setBrightness)(const uint8_t idx, const uint8_t led_num, const uint8_t value);
-  int (*setBrightnessAll)(const uint8_t idx, const uint8_t value);
-  int (*setColor)(const uint8_t idx, const uint8_t led_num, const uint8_t red, const uint8_t green, const uint8_t blue);
-  int (*setColorAll)(const uint8_t idx, const uint8_t red, const uint8_t green, const uint8_t blue);
-  int (*update)(const uint8_t idx, const led_effect_t effect);
+  int (*setBrightness)(const uint8_t idx, const uint8_t led_num, const uint8_t value, const int timeMs);
+  int (*setBrightnessAll)(const uint8_t idx, const uint8_t value, const int timeMs);
+  int (*setColor)(const uint8_t idx, const uint8_t led_num, const uint8_t red, const uint8_t green, const uint8_t blue, const int timeMs);
+  int (*setColorAll)(const uint8_t idx, const uint8_t red, const uint8_t green, const uint8_t blue, const int timeMs);
+  int (*update)(const uint8_t idx);
 };
 
 extern struct mu_led_ctrl_if muLedCtrl;

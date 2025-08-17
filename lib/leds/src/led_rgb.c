@@ -15,8 +15,18 @@ LOG_MODULE_REGISTER(mu_led_rgb);
 static const struct mu_led_ctrl_if* ctrl;
 const struct mu_led_rgb_pos_map *rgbMap = NULL;
 size_t rgbMapSize;
+static const struct mu_timer_if* timer;
+static timer_handle_t tmFinished;
+static led_rgb_finished_cb userCb = NULL;
 
-	/**!
+static void internalCb(void *user_data)
+{
+	if (userCb) {
+		userCb();
+	}
+}
+
+/**
  *
  * @param app_pos Application point of view position
  * @param dev_idx Device index where the LED il connected
@@ -42,10 +52,14 @@ static int app_to_dt_pos(uint8_t app_pos, uint8_t *dev_idx, uint8_t *dt_pos)
  * @param led_ctrl LED controller
  * @return
  */
-static int mu_led_rgb_init(const struct mu_led_ctrl_if *led_ctrl)
+static int mu_led_rgb_init(const struct mu_led_ctrl_if *led_ctrl,
+			   const struct mu_timer_if* muTimer)
 {
 	__ASSERT(led_ctrl, "led_ctrl shall not be NULL");
 	ctrl = led_ctrl;
+	timer = muTimer;
+
+	timer->init(&tmFinished, internalCb, NULL);
 	return 0;
 }
 
@@ -69,9 +83,11 @@ static int mu_led_set_map(const struct mu_led_rgb_pos_map *map, size_t size)
  * @param green Green value
  * @param blue Blue value
  * @param brightness Brightness value
+ * @param timeMs
  * @return Return 0 if success, otherwise it returns a negative value
  */
-static int mu_led_set_rgb(unsigned int num, uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness)
+static int mu_led_set_rgb(unsigned int num, uint8_t red, uint8_t green, uint8_t blue,
+			  uint8_t brightness, const int timeMs, led_rgb_finished_cb cb)
 {
 	uint8_t dev_idx = 0;
 	uint8_t dt_pos = 0;
@@ -82,14 +98,23 @@ static int mu_led_set_rgb(unsigned int num, uint8_t red, uint8_t green, uint8_t 
 		return ret;
 	}
 
-	ret = ctrl->setColor(dev_idx, dt_pos, red, green, blue);
+	userCb = cb;
+
+	/* Trigger timer for user notification only if cb is set */
+	if (cb) {
+		timer->start(&tmFinished, timeMs, 0);
+	} else {
+		timer->stop(&tmFinished);
+	}
+
+	ret = ctrl->setColor(dev_idx, dt_pos, red, green, blue, timeMs);
 
 	if (ret < 0) {
 		LOG_ERR("Unable to apply new RGB color to %d (err: %d)", num, ret);
 		return ret;
 	}
 
-	ret = ctrl->setBrightness(dev_idx, dt_pos, brightness);
+	ret = ctrl->setBrightness(dev_idx, dt_pos, brightness, timeMs);
 
 	if (ret < 0) {
 		LOG_ERR("Unable to apply new RGB brightness to %d (err: %d)", num, ret);
@@ -105,14 +130,16 @@ static int mu_led_set_rgb(unsigned int num, uint8_t red, uint8_t green, uint8_t 
  * @param green Green value
  * @param blue Blue value
  * @param brightness Brightness value
+ * @param timeMs
  * @return Return 0 if success, otherwise it returns a negative value
  */
-static int mu_led_set_rgb_all(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness)
+static int mu_led_set_rgb_all(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness,
+			      const int timeMs, led_rgb_finished_cb cb)
 {
 	int ret = 0;
 
 	for (int i = 0; i < rgbMapSize; i++) {
-		ret += mu_led_set_rgb(rgbMap[i].app_pos, red, green, blue, brightness);
+		ret += mu_led_set_rgb(rgbMap[i].app_pos, red, green, blue, brightness, timeMs, cb);
 	}
 
 	return ret;
