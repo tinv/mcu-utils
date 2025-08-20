@@ -249,6 +249,11 @@ static int muStorage_file_read(const char *fname, uint8_t *buf,
 	return ret;
 }
 
+static int muStorage_file_remove(const char *fname)
+{
+	return fs_unlink(fname);
+}
+
 static int muStorage_file_exists(const char *fname)
 {
 	struct fs_dirent entry;
@@ -261,5 +266,6 @@ const struct mu_storage_if muStorage = {
 	.umount = muStorage_umount,
 	.file_write = muStorage_file_write,
 	.file_read = muStorage_file_read,
-	.file_exists = muStorage_file_exists
+	.file_remove = muStorage_file_remove,
+	.file_exists = muStorage_file_exists,
 };

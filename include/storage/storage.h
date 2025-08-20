@@ -61,6 +61,13 @@ struct mu_storage_if {
 	 */
 	int (*file_read)(const char *fname, uint8_t *buf, const size_t size);
 
+	/**
+	 * Remove a file
+	 * @param fname
+	 * @return
+	 */
+	int (*file_remove)(const char *fname);
+
 	/**!
 	 *
 	 * @param fname

@@ -29,6 +29,11 @@ static int file_read(const char *fname, uint8_t *buf, const size_t size)
 	return MuStorageMockObj->file_read(fname, buf, size);
 }
 
+static int file_remove(const char *fname)
+{
+	return MuStorageMockObj->file_remove(fname);
+}
+
 static int file_exists(const char *fname)
 {
 	return MuStorageMockObj->file_exists(fname);
@@ -41,5 +46,6 @@ const struct mu_storage_if muStorageMock =
 	.umount = umount,
 	.file_write = file_write,
 	.file_read = file_read,
+	.file_remove = file_remove,
 	.file_exists = file_exists
 };
