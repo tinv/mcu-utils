@@ -32,9 +32,9 @@ MuTimerFake::MuTimerFake()
 
 int MuTimerFake::init(timer_handle_t *handle, timerCallback cb, void *user_data)
 {
-	mHandle = handle;
 	handle->cb = cb;
 	handle->user_data = user_data;
+	mHandles.push_back(handle);
 	return 0;
 }
 
@@ -69,27 +69,26 @@ void MuTimerFake::setClock(MuClockFake *clock)
 
 void MuTimerFake::tick()
 {
-
-	if (!mHandle->active || !mHandle->cb) {
-		return;
-	}
-
+	std::list<timer_handle_t *>::iterator it;
 	uint64_t now = mClock->nowMs();
 
-	if (now >= mHandle->expiry) {
-		mHandle->cb(mHandle->user_data);
+	for (auto const it: mHandles) {
 
-		if (mHandle->period > 0) {
-			mHandle->expiry += mHandle->period;
-		} else {
-			mHandle->active = false;
+		if (!it->active || !it->cb) {
+			continue;
 		}
 
+		if (now >= it->expiry) {
+			it->cb(it->user_data);
+
+			if (it->period > 0) {
+				it->expiry += it->period;
+			} else {
+				it->active = false;
+			}
+		}
 	}
-
-
 }
-
 
 struct mu_timer_if muTimerFake = {
 	.init = timer_init,

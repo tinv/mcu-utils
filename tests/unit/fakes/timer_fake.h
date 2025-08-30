@@ -3,6 +3,7 @@
 #define MU_TIMER_MOCK_H
 
 #include <gmock/gmock.h>
+#include <list>
 #include <stdint.h>
 #include "time/timer.h"
 #include "clock_fake.h"
@@ -23,7 +24,10 @@ class MuTimerFake : public MuTimerInterface
 {
       public:
 	MuTimerFake();
-	virtual ~MuTimerFake() {}
+	virtual ~MuTimerFake()
+	{
+		mHandles.clear();
+	}
 	int init(timer_handle_t *handle, timerCallback cb, void *user_data) override;
 	int start(timer_handle_t *handle, uint32_t timeout_ms, uint32_t periodic_ms) override;
 	int stop(timer_handle_t *handle) override;
@@ -32,8 +36,9 @@ class MuTimerFake : public MuTimerInterface
 	void setClock(MuClockFake *clock);
 
       private:
-	timer_handle_t *mHandle;
+	std::list<timer_handle_t *> mHandles;
 	MuClockFake *mClock;
+
 };
 
 
