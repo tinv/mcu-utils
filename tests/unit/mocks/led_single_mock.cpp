@@ -6,6 +6,11 @@
 #include "led_single_mock.h"
 
 MuLedSingleMock* MuLedSingleMockObj = nullptr;
+led_single_finished_cb MuLedSingleMock::userCbAmb = NULL;
+led_single_finished_cb MuLedSingleMock::userCbRed = NULL;
+led_single_finished_cb MuLedSingleMock::userCbBlue = NULL;
+led_single_finished_cb MuLedSingleMock::userCbGreen = NULL;
+led_single_finished_cb MuLedSingleMock::userCbIr = NULL;
 
 static int muLedSingle_init(const struct mu_led_ctrl_if* led_ctrl, const struct mu_timer_if* muTimer)
 {

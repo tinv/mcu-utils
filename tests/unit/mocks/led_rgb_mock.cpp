@@ -5,6 +5,7 @@
 #include "led_rgb_mock.h"
 
 MuLedRgbMock* MuLedRgbMockObj = nullptr;
+led_rgb_finished_cb MuLedRgbMock::userCb = NULL;
 
 int init(const struct mu_led_ctrl_if* led_ctrl, const struct mu_timer_if* muTimer)
 {
