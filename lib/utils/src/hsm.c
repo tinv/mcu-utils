@@ -166,10 +166,12 @@ static int _execLoop(mu_hsmCtx_t* ctx)
                 newEvent = ctx->states[i].loop( ctx->userData );
                 if (newEvent != NO_EVENT)
                 {
-                    if (newEvent != ANY_EVENT)
-                        LOG_INF( "ev %s", hsm_getEventName( ctx, newEvent ) );
-                    else
-                        LOG_DBG("ev ANY_EVENT");
+                    if (newEvent != ANY_EVENT) {
+                    	const char* name = hsm_getEventName( ctx, newEvent );
+                    	LOG_INF( "ev %s", name != NULL ? name : "name not found" );
+                    } else {
+                    	LOG_DBG("ev ANY_EVENT");
+                    }
                     ctx->ctrl.nextEvent = newEvent;
                 }
                 return 0;
