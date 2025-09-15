@@ -31,7 +31,7 @@ struct mu_hsmState
     int parent;
     void (*entry)(void* iface);
     int (*loop)(void* iface);
-    void (*exit)(void* iface);
+    void (*exit)(void* iface, int nextState);
 };
 
 struct mu_hsmTransition
@@ -102,7 +102,7 @@ struct mu_hsmCtx
 #define MU_HSM_DECL_ALL_FN(NAME)   \
     void NAME##Entry( void* dev );         \
     int NAME##Loop( void* dev );           \
-    void NAME##Exit( void* dev );
+    void NAME##Exit( void* dev, int nextState );
 
 #define MU_HSM_DECL_ENTRY_LOOP_FN(NAME)    \
     void NAME##Entry( void* dev );    \
@@ -115,7 +115,7 @@ struct mu_hsmCtx
     int NAME##Loop( void* dev )
 
 #define MU_HSM_DEF_FUNC_EXIT(NAME)         \
-    void NAME##Exit( void* dev )
+    void NAME##Exit( void* dev, int nextState )
 
 #define MU_HSM_TRANSITION(STATE, EVENT, NEXTSTATE) \
     {                                    \

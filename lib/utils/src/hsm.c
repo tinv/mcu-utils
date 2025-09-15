@@ -142,7 +142,7 @@ static int _execExit(mu_hsmCtx_t* ctx)
     {
         if (ctx->ctrl.currState == ctx->states[i].state && ctx->states[i].exit != 0) {
             LOG_INF( "st %s exit", ctx->states[i].name );
-            ctx->states[i].exit( ctx->userData );
+            ctx->states[i].exit( ctx->userData, ctx->ctrl.nextState);
             return 0;
         }
     }
