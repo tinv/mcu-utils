@@ -1,0 +1,7 @@
+# Copyright (c) 2024, TecInvent Electronics Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config MCU_UTILS_WORKQUEUE
+	bool "Support for mcu utils work queue library"
+	help
+	  This option enables the 'mcu utils work queue' library
