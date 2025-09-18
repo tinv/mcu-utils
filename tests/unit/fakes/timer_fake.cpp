@@ -79,13 +79,14 @@ void MuTimerFake::tick()
 		}
 
 		if (now >= it->expiry) {
-			it->cb(it->user_data);
 
 			if (it->period > 0) {
 				it->expiry += it->period;
 			} else {
 				it->active = false;
 			}
+
+			it->cb(it->user_data);
 		}
 	}
 }
