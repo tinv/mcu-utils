@@ -22,6 +22,11 @@ class MuLedSingleInterface
 			      uint8_t brightness, const int timeMs, led_single_finished_cb cb) = 0;
 	virtual int setAll(const enum mu_led_single_type, uint8_t brightness, const int timeMs,
 			   led_single_finished_cb cb) = 0;
+
+	virtual bool finishedAll() = 0;
+
+	virtual bool finished(const enum mu_led_single_type type) = 0;
+
 };
 
 class MuLedSingleMock : public MuLedSingleInterface
@@ -154,6 +159,10 @@ class MuLedSingleMock : public MuLedSingleInterface
 				     led_single_finished_cb cb), (override));
 	MOCK_METHOD(int, setAll, (const enum mu_led_single_type type, uint8_t brightness,
 				  const int timeMs, led_single_finished_cb cb), (override));
+
+	MOCK_METHOD(bool, finishedAll, (), (override));
+
+	MOCK_METHOD(bool, finished, (const enum mu_led_single_type type), (override));
 
 private:
 	MuTimerFake *mTimerFake;

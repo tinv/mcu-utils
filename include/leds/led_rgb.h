@@ -65,6 +65,12 @@ struct mu_led_rgb_if {
 	 */
 	int (*setAll)(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness, const int timeMs,
 		      led_rgb_finished_cb cb);
+
+	/**
+	 * Checks whether all LEDs have pending operations
+	 * @return Returns true if all fade effects are finished, otherwise false
+	 */
+	bool (*finishedAll)(void);
 };
 
 extern const struct mu_led_rgb_if muLedRgb;

@@ -18,9 +18,12 @@ size_t rgbMapSize;
 static const struct mu_timer_if* timer;
 static timer_handle_t tmFinished;
 static led_rgb_finished_cb userCb = NULL;
+static bool finished = true;
 
 static void internalCb(void *user_data)
 {
+	finished = true;
+
 	if (userCb) {
 		userCb();
 	}
@@ -58,7 +61,7 @@ static int mu_led_rgb_init(const struct mu_led_ctrl_if *led_ctrl,
 	__ASSERT(led_ctrl, "led_ctrl shall not be NULL");
 	ctrl = led_ctrl;
 	timer = muTimer;
-
+	finished = true;
 	timer->init(&tmFinished, internalCb, NULL);
 	return 0;
 }
@@ -98,15 +101,6 @@ static int mu_led_set_rgb(unsigned int num, uint8_t red, uint8_t green, uint8_t 
 		return ret;
 	}
 
-	userCb = cb;
-
-	/* Trigger timer for user notification only if cb is set */
-	if (cb) {
-		timer->start(&tmFinished, timeMs, 0);
-	} else {
-		timer->stop(&tmFinished);
-	}
-
 	ret = ctrl->setColor(dev_idx, dt_pos, red, green, blue, timeMs);
 
 	if (ret < 0) {
@@ -120,6 +114,10 @@ static int mu_led_set_rgb(unsigned int num, uint8_t red, uint8_t green, uint8_t 
 		LOG_ERR("Unable to apply new RGB brightness to %d (err: %d)", num, ret);
 		return ret;
 	}
+
+	userCb = cb;
+	finished = false;
+	timer->start(&tmFinished, timeMs, 0);
 
 	return ret;
 }
@@ -145,9 +143,15 @@ static int mu_led_set_rgb_all(uint8_t red, uint8_t green, uint8_t blue, uint8_t 
 	return ret;
 }
 
+static bool mu_led_rgb_finishedAll(void)
+{
+	return finished;
+}
+
 const struct mu_led_rgb_if muLedRgb = {
 	.init = mu_led_rgb_init,
 	.setMap = mu_led_set_map,
 	.setSingle = mu_led_set_rgb,
-	.setAll = mu_led_set_rgb_all
+	.setAll = mu_led_set_rgb_all,
+	.finishedAll = mu_led_rgb_finishedAll
 };

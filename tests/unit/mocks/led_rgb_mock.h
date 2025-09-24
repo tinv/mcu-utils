@@ -24,6 +24,7 @@ class MuLedRgbInterface
 			      uint8_t brightness, const int timeMs, led_rgb_finished_cb cb) = 0;
 	virtual int setAll(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness,
 			   const int timeMs, led_rgb_finished_cb cb) = 0;
+	virtual bool finishedAll() = 0;
 };
 
 class MuLedRgbMock : public MuLedRgbInterface
@@ -100,6 +101,8 @@ class MuLedRgbMock : public MuLedRgbInterface
 				     uint8_t brightness, const int timeMs, led_rgb_finished_cb cb), (override));
 	MOCK_METHOD(int, setAll, (uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness,
 				  const int timeMs, led_rgb_finished_cb cb), (override));
+
+	MOCK_METHOD(bool, finishedAll, (), (override));
 
 	private:
 

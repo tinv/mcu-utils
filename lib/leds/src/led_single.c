@@ -19,6 +19,7 @@ struct led_type_map {
 	size_t map_size;
 	timer_handle_t* execTm;
 	led_single_finished_cb finishedCb;
+	bool finished;
 };
 
 static const struct mu_led_ctrl_if* ctrl;
@@ -38,35 +39,40 @@ static struct led_type_map led_map[] = {
 		.map = NULL,
 		.map_size = 0,
 		.execTm = &tmRed,
-		.finishedCb = NULL
+		.finishedCb = NULL,
+		.finished = true
 	},
 	{
 		.type = MU_LED_GREEN,
 		.map = NULL,
 		.map_size = 0,
 		.execTm = &tmGreen,
-		.finishedCb = NULL
+		.finishedCb = NULL,
+		.finished = true
 	},
 	{
 		.type = MU_LED_BLUE,
 		.map = NULL,
 		.map_size = 0,
 		.execTm = &tmBlue,
-		.finishedCb = NULL
+		.finishedCb = NULL,
+		.finished = true
 	},
 	{
 		.type = MU_LED_AMBER,
 		.map = NULL,
 		.map_size = 0,
 		.execTm = &tmAmber,
-		.finishedCb = NULL
+		.finishedCb = NULL,
+		.finished = true
 	},
 	{
 		.type = MU_LED_IR,
 		.map = NULL,
 		.map_size = 0,
 		.execTm = &tmIr,
-		.finishedCb = NULL
+		.finishedCb = NULL,
+		.finished = true
 	}
 };
 
@@ -75,8 +81,14 @@ static struct led_type_map led_map[] = {
 static void internalCb(void *user_data)
 {
 	struct led_type_map* map = (struct led_type_map*)(user_data);
-	if (map && map->finishedCb) {
-		map->finishedCb(map->type);
+
+	if (map) {
+
+		map->finished = true;
+
+		if (map->finishedCb) {
+			map->finishedCb(map->type);
+		}
 	}
 }
 
@@ -84,6 +96,7 @@ static int initTimers(void)
 {
 	int ret = 0;
 	for (int i = 0; i < ARRAY_SIZE(led_map); i++) {
+		led_map[i].finished = true;
 		ret += timer->init(led_map[i].execTm, internalCb, &led_map[i]);
 	}
 	return ret;
@@ -94,6 +107,7 @@ static void startTimer(const enum mu_led_single_type type, led_single_finished_c
 	for (int i = 0; i < ARRAY_SIZE(led_map); i++) {
 		if (led_map[i].type == type) {
 			led_map[i].finishedCb = cb;
+			led_map[i].finished = false;
 			timer->start(led_map[i].execTm, timeoutMs, 0);
 			return;
 		}
@@ -105,6 +119,7 @@ static void stopTimer(const enum mu_led_single_type type)
 	for (int i = 0; i < ARRAY_SIZE(led_map); i++) {
 		if (led_map[i].type == type) {
 			led_map[i].finishedCb = NULL;
+			led_map[i].finished = true;
 			timer->stop(led_map[i].execTm);
 			return;
 		}
@@ -202,12 +217,12 @@ static int mu_led_set_single_all(const enum mu_led_single_type type, const uint8
 		}
 	}
 
-	/* Trigger timer for user notification only if cb is set */
-	if (cb) {
-		startTimer(type, cb, timeMs);
-	} else {
-		stopTimer(type);
+	if (ret < 0) {
+		LOG_ERR("Unable to apply single brightness to all (err: %d)", ret);
+		return ret;
 	}
+
+	startTimer(type, cb, timeMs);
 
 	return ret;
 }
@@ -233,13 +248,6 @@ static int mu_led_set_single(const enum mu_led_single_type type, const unsigned 
 		return ret;
 	}
 
-	/* Trigger timer for user notification only if cb is set */
-	if (cb) {
-		startTimer(type, cb, timeMs);
-	} else {
-		stopTimer(type);
-	}
-
 	ret = ctrl->setBrightness(dev_idx, dt_pos, brightness, timeMs);
 
 	if (ret < 0) {
@@ -247,12 +255,38 @@ static int mu_led_set_single(const enum mu_led_single_type type, const unsigned 
 		return ret;
 	}
 
+	startTimer(type, cb, timeMs);
+
 	return ret;
+}
+
+static bool mu_led_single_finishedAll(void)
+{
+	for (int i = 0; i < ARRAY_SIZE(led_map); i++) {
+		if (led_map[i].finished == false) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool mu_led_single_finished(const enum mu_led_single_type type)
+{
+	for (int i = 0; i < ARRAY_SIZE(led_map); i++) {
+		if (led_map[i].type == type) {
+			return led_map[i].finished;
+		}
+	}
+
+	return true;
 }
 
 const struct mu_led_single_if muLedSingle = {
 	.init = mu_led_single_init,
 	.setMap = mu_led_set_map,
 	.setSingle = mu_led_set_single,
-	.setAll = mu_led_set_single_all
+	.setAll = mu_led_set_single_all,
+	.finishedAll = mu_led_single_finishedAll,
+	.finished = mu_led_single_finished,
 };

@@ -35,9 +35,21 @@ static int muLedSingle_setAll(const enum mu_led_single_type type, uint8_t bright
 	return MuLedSingleMockObj->setAll(type, brightness, timeMs, cb);
 }
 
+static bool muLedSingle_finishedAll()
+{
+	return MuLedSingleMockObj->finishedAll();
+}
+
+static bool muLedSingle_finished(const enum mu_led_single_type type)
+{
+	return MuLedSingleMockObj->finished(type);
+}
+
 const struct mu_led_single_if muLedSingleMock = {
 	.init = muLedSingle_init,
 	.setMap = muLedSingle_setMap,
 	.setSingle = muLedSingle_setSingle,
-	.setAll = muLedSingle_setAll
+	.setAll = muLedSingle_setAll,
+	.finishedAll = muLedSingle_finishedAll,
+	.finished = muLedSingle_finished,
 };

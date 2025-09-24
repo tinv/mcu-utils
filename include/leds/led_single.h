@@ -73,6 +73,19 @@ struct mu_led_single_if {
 	 */
 	int (*setAll)(const enum mu_led_single_type type, const uint8_t brightness,
 		      const int timeMs, led_single_finished_cb cb);
+
+	/**
+	 * Checks whether all LEDs have pending operations
+	 * @return Returns true if all fade effects are finished, otherwise false
+	 */
+	bool (*finishedAll)(void);
+
+	/**
+	 * Checks whether LEDs of @p type have pending operations
+	 * @param type  LED type
+	 * @return Returns true if all fade effects are finished, otherwise false
+	 */
+	bool (*finished)(const enum mu_led_single_type type);
 };
 
 /* formatter:on */
