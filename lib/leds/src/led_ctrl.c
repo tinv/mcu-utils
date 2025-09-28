@@ -426,11 +426,10 @@ static int led_ctrl_update(const uint8_t idx)
 						   &data->module[i].color.step[j],
 						   &data->module[i].color.accu[j]);
 
-				if ((j % 3) == 0 && update) {
+				if (data->module[i].color.size == 3 && update) {
 					if ((ret = led_set_color(
 						     config->dev, i, data->module[i].color.size,
-						     &data->module[i]
-							      .color.current[j != 0 ? j - 3 : 0])) <
+						     data->module[i].color.current)) <
 					    0) {
 						k_mutex_unlock(&data->lock);
 						LOG_ERR("Unable to set color err %d", ret);
