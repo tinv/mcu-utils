@@ -4,6 +4,7 @@
 
 #include <gmock/gmock.h>
 #include <leds/led_single.h>
+#include <list>
 #include <time/timer.h>
 #include <timer_fake.h>
 #include <zephyr/sys/util.h>
@@ -14,17 +15,15 @@ class MuLedSingleInterface
 {
       public:
 	virtual ~MuLedSingleInterface() {};
-	virtual int init(const struct mu_led_ctrl_if* led_ctrl,
-			 const struct mu_timer_if* muTimer) = 0;
+	virtual int init(const struct mu_led_ctrl_if* led_ctrl) = 0;
 	virtual int setMap(const enum mu_led_single_type type, const struct mu_led_single_pos_map *map,
 			   size_t size ) = 0;
 	virtual int setSingle(const enum mu_led_single_type type, unsigned int num,
 			      uint8_t brightness, const int timeMs, led_single_finished_cb cb) = 0;
 	virtual int setAll(const enum mu_led_single_type, uint8_t brightness, const int timeMs,
 			   led_single_finished_cb cb) = 0;
-
+	virtual int start() = 0;
 	virtual bool finishedAll() = 0;
-
 	virtual bool finished(const enum mu_led_single_type type) = 0;
 
 };
@@ -45,9 +44,8 @@ class MuLedSingleMock : public MuLedSingleInterface
 			[this](const enum mu_led_single_type type, unsigned int num,
 				uint8_t brightness, const int timeMs, led_single_finished_cb cb) {
 
-				ARG_UNUSED(num);
 				ARG_UNUSED(brightness);
-				return assignCb(type, timeMs, cb);
+				return assignCb(type, num, timeMs, cb);
 			}
 		);
 
@@ -56,7 +54,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 				const int timeMs, led_single_finished_cb cb) {
 
 				ARG_UNUSED(brightness);
-				return assignCb(type, timeMs, cb);
+				return assignCb(type, 0, timeMs, cb);
 			}
 		);
 
@@ -64,11 +62,12 @@ class MuLedSingleMock : public MuLedSingleInterface
 
 	virtual ~MuLedSingleMock() {};
 
-	int assignCb(const enum mu_led_single_type type, const int timeMs, led_single_finished_cb cb)
+	int assignCb(const enum mu_led_single_type type, unsigned int num, const int timeMs, led_single_finished_cb cb)
 	{
 		switch (type) {
 		case MU_LED_RED:
 			if (cb) {
+				mStartedLedNumRed = num;
 				mTimerFake->start(&tmRedFinished, timeMs, 0);
 			} else {
 				mTimerFake->stop(&tmRedFinished);
@@ -76,6 +75,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 			break;
 		case MU_LED_BLUE:
 			if (cb) {
+				mStartedLedNumBlue = num;
 				mTimerFake->start(&tmBlueFinished, timeMs, 0);
 			} else {
 				mTimerFake->stop(&tmBlueFinished);
@@ -83,6 +83,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 			break;
 		case MU_LED_AMBER:
 			if (cb) {
+				mStartedLedNumAmb = num;
 				mTimerFake->start(&tmAmbFinished, timeMs, 0);
 			} else {
 				mTimerFake->stop(&tmAmbFinished);
@@ -90,6 +91,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 			break;
 		case MU_LED_IR:
 			if (cb) {
+				mStartedLedNumIr = num;
 				mTimerFake->start(&tmIrFinished, timeMs, 0);
 			} else {
 				mTimerFake->stop(&tmIrFinished);
@@ -110,7 +112,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 		ARG_UNUSED(user_data);
 
 		if (userCbAmb) {
-			userCbAmb(MU_LED_AMBER);
+			userCbAmb(MU_LED_AMBER, mStartedLedNumAmb);
 		}
 	};
 
@@ -119,7 +121,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 		ARG_UNUSED(user_data);
 
 		if (userCbRed) {
-			userCbRed(MU_LED_RED);
+			userCbRed(MU_LED_RED, mStartedLedNumRed);
 		}
 	};
 
@@ -128,7 +130,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 		ARG_UNUSED(user_data);
 
 		if (userCbBlue) {
-			userCbBlue(MU_LED_BLUE);
+			userCbBlue(MU_LED_BLUE, mStartedLedNumBlue);
 		}
 	};
 
@@ -137,7 +139,7 @@ class MuLedSingleMock : public MuLedSingleInterface
 		ARG_UNUSED(user_data);
 
 		if (userCbGreen) {
-			userCbGreen(MU_LED_GREEN);
+			userCbGreen(MU_LED_GREEN, mStartedLedNumGreen);
 		}
 	};
 
@@ -146,12 +148,11 @@ class MuLedSingleMock : public MuLedSingleInterface
 		ARG_UNUSED(user_data);
 
 		if (userCbIr) {
-			userCbIr(MU_LED_IR);
+			userCbIr(MU_LED_IR, mStartedLedNumIr);
 		}
 	};
 
-	MOCK_METHOD(int, init, (const struct mu_led_ctrl_if* led_ctrl,
-				const struct mu_timer_if* muTimer), (override));
+	MOCK_METHOD(int, init, (const struct mu_led_ctrl_if* led_ctrl), (override));
 	MOCK_METHOD(int, setMap, (const enum mu_led_single_type type,
 				  const struct mu_led_single_pos_map *map, size_t size ), (override));
 	MOCK_METHOD(int, setSingle, (const enum mu_led_single_type type, unsigned int num,
@@ -159,9 +160,8 @@ class MuLedSingleMock : public MuLedSingleInterface
 				     led_single_finished_cb cb), (override));
 	MOCK_METHOD(int, setAll, (const enum mu_led_single_type type, uint8_t brightness,
 				  const int timeMs, led_single_finished_cb cb), (override));
-
+	MOCK_METHOD(int, start, (), (override));
 	MOCK_METHOD(bool, finishedAll, (), (override));
-
 	MOCK_METHOD(bool, finished, (const enum mu_led_single_type type), (override));
 
 private:
@@ -176,6 +176,12 @@ private:
 	static led_single_finished_cb userCbBlue;
 	static led_single_finished_cb userCbGreen;
 	static led_single_finished_cb userCbIr;
+	static unsigned int mStartedLedNumAmb;
+	static unsigned int mStartedLedNumRed;
+	static unsigned int mStartedLedNumBlue;
+	static unsigned int mStartedLedNumGreen;
+	static unsigned int mStartedLedNumIr;
+
 };
 
 extern const struct mu_led_single_if muLedSingleMock;

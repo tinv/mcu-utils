@@ -12,9 +12,15 @@ led_single_finished_cb MuLedSingleMock::userCbBlue = NULL;
 led_single_finished_cb MuLedSingleMock::userCbGreen = NULL;
 led_single_finished_cb MuLedSingleMock::userCbIr = NULL;
 
-static int muLedSingle_init(const struct mu_led_ctrl_if* led_ctrl, const struct mu_timer_if* muTimer)
+unsigned int MuLedSingleMock::mStartedLedNumAmb = 0;
+unsigned int MuLedSingleMock::mStartedLedNumRed = 0;
+unsigned int MuLedSingleMock::mStartedLedNumBlue = 0;
+unsigned int MuLedSingleMock::mStartedLedNumGreen = 0;
+unsigned int MuLedSingleMock::mStartedLedNumIr = 0;
+
+static int muLedSingle_init(const struct mu_led_ctrl_if* led_ctrl)
 {
-	return MuLedSingleMockObj->init(led_ctrl, muTimer);
+	return MuLedSingleMockObj->init(led_ctrl);
 }
 
 static int muLedSingle_setMap(const enum mu_led_single_type type,
@@ -35,6 +41,11 @@ static int muLedSingle_setAll(const enum mu_led_single_type type, uint8_t bright
 	return MuLedSingleMockObj->setAll(type, brightness, timeMs, cb);
 }
 
+static int muLedSingle_start()
+{
+	return MuLedSingleMockObj->start();
+}
+
 static bool muLedSingle_finishedAll()
 {
 	return MuLedSingleMockObj->finishedAll();
@@ -50,6 +61,7 @@ const struct mu_led_single_if muLedSingleMock = {
 	.setMap = muLedSingle_setMap,
 	.setSingle = muLedSingle_setSingle,
 	.setAll = muLedSingle_setAll,
+	.start = muLedSingle_start,
 	.finishedAll = muLedSingle_finishedAll,
 	.finished = muLedSingle_finished,
 };

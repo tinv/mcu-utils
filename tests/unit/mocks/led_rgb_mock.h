@@ -17,13 +17,13 @@ class MuLedRgbInterface
 {
       public:
 	virtual ~MuLedRgbInterface() {};
-	virtual int init(const struct mu_led_ctrl_if* led_ctrl,
-			 const struct mu_timer_if* muTimer) = 0;
+	virtual int init(const struct mu_led_ctrl_if* led_ctrl) = 0;
 	virtual int setMap(const struct mu_led_rgb_pos_map *map, size_t size) = 0;
 	virtual int setSingle(unsigned int num, uint8_t red, uint8_t green, uint8_t blue,
 			      uint8_t brightness, const int timeMs, led_rgb_finished_cb cb) = 0;
 	virtual int setAll(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness,
 			   const int timeMs, led_rgb_finished_cb cb) = 0;
+	virtual int start() = 0;
 	virtual bool finishedAll() = 0;
 };
 
@@ -40,7 +40,6 @@ class MuLedRgbMock : public MuLedRgbInterface
 			[this](unsigned int num, uint8_t red, uint8_t green, uint8_t blue,
 		    		uint8_t brightness, const int timeMs, led_rgb_finished_cb cb) {
 
-					ARG_UNUSED(num);
 					ARG_UNUSED(red);
 					ARG_UNUSED(green);
 					ARG_UNUSED(blue);
@@ -50,6 +49,7 @@ class MuLedRgbMock : public MuLedRgbInterface
 
 		    			/* Trigger timer for user notification only if cb is set */
 					if (cb) {
+						mStartedLedNum = num;
 						mTimerFake->start(&tmFinished, timeMs, 0);
 					} else {
 						mTimerFake->stop(&tmFinished);
@@ -72,6 +72,7 @@ class MuLedRgbMock : public MuLedRgbInterface
 
 		    			/* Trigger timer for user notification only if cb is set */
 					if (cb) {
+						mStartedLedNum = 0;
 						mTimerFake->start(&tmFinished, timeMs, 0);
 					} else {
 						mTimerFake->stop(&tmFinished);
@@ -90,18 +91,17 @@ class MuLedRgbMock : public MuLedRgbInterface
 		ARG_UNUSED(user_data);
 
 		if (userCb) {
-			userCb();
+			userCb(mStartedLedNum);
 		}
 	};
 
-	MOCK_METHOD(int, init, (const struct mu_led_ctrl_if* led_ctrl,
-				const struct mu_timer_if* muTimer), (override));
+	MOCK_METHOD(int, init, (const struct mu_led_ctrl_if* led_ctrl), (override));
 	MOCK_METHOD(int, setMap, (const struct mu_led_rgb_pos_map *map, size_t size), (override));
 	MOCK_METHOD(int, setSingle, (unsigned int num, uint8_t red, uint8_t green, uint8_t blue,
 				     uint8_t brightness, const int timeMs, led_rgb_finished_cb cb), (override));
 	MOCK_METHOD(int, setAll, (uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness,
 				  const int timeMs, led_rgb_finished_cb cb), (override));
-
+	MOCK_METHOD(int, start, (), (override));
 	MOCK_METHOD(bool, finishedAll, (), (override));
 
 	private:
@@ -109,6 +109,7 @@ class MuLedRgbMock : public MuLedRgbInterface
 	MuTimerFake *mTimerFake;
 	timer_handle_t tmFinished;
 	static led_rgb_finished_cb userCb;
+	static unsigned int mStartedLedNum;
 
 };
 

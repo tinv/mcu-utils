@@ -20,16 +20,15 @@ struct mu_led_rgb_pos_map {
 	uint8_t dt_pos;
 };
 
-typedef void (*led_rgb_finished_cb)(void);
+typedef void (*led_rgb_finished_cb)(const uint8_t app_pos);
 
 struct mu_led_rgb_if {
 	/**
 	 * Initilizes the RGB led sub-system
 	 * @param led_ctrl LED controller interface
-	 * @param muTimer Timer interface
 	 * @return Returns 0 on success, otherwise it returns a negative number
 	 */
-	int (*init)(const struct mu_led_ctrl_if *led_ctrl, const struct mu_timer_if* muTimer);
+	int (*init)(const struct mu_led_ctrl_if *led_ctrl);
 
 	/**
 	 *
@@ -65,6 +64,11 @@ struct mu_led_rgb_if {
 	 */
 	int (*setAll)(uint8_t red, uint8_t green, uint8_t blue, uint8_t brightness, const int timeMs,
 		      led_rgb_finished_cb cb);
+
+	/**
+	 * Starts fade effect
+	 */
+	int (*start)(void);
 
 	/**
 	 * Checks whether all LEDs have pending operations

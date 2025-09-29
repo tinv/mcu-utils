@@ -29,7 +29,7 @@ struct mu_led_single_pos_map {
 	uint8_t dt_pos;
 };
 
-typedef void (*led_single_finished_cb)(const enum mu_led_single_type);
+typedef void (*led_single_finished_cb)(const enum mu_led_single_type, const int app_pos);
 
 /* formatter:off */
 
@@ -39,7 +39,7 @@ struct mu_led_single_if {
 	 * @param led_ctrl
 	 * @return
 	 */
-	int (*init)(const struct mu_led_ctrl_if *led_ctrl, const struct mu_timer_if* muTimer);
+	int (*init)(const struct mu_led_ctrl_if *led_ctrl);
 
 	/**
 	 *
@@ -73,6 +73,12 @@ struct mu_led_single_if {
 	 */
 	int (*setAll)(const enum mu_led_single_type type, const uint8_t brightness,
 		      const int timeMs, led_single_finished_cb cb);
+
+	/**
+	 * Start fade
+	 * @return Returns 0 on success, otherwise it returns a negative number
+	 */
+	int (*start)(void);
 
 	/**
 	 * Checks whether all LEDs have pending operations

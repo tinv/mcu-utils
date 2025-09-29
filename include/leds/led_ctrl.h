@@ -36,16 +36,22 @@ typedef struct led_dev {
 /**!
  *
  */
-typedef void (*led_ctrl_finished_cb)(const uint8_t idx);
+typedef void (*led_ctrl_finished_cb)(const uint8_t idx, const int led_num);
 
 struct mu_led_ctrl_if
 {
-  int (*init)(led_ctrl_finished_cb finished_cb);
+  int (*init)(void);
   int (*getDevQty)(void);
+  int (*setBrightnessCb)(led_ctrl_finished_cb cb);
   int (*setBrightness)(const uint8_t idx, const uint8_t led_num, const uint8_t value, const int timeMs);
   int (*setBrightnessAll)(const uint8_t idx, const uint8_t value, const int timeMs);
+  int (*startBrightness)(void);
+  bool (*isBrightnessFinished)(const uint8_t idx, const uint8_t led_num);
+  int (*setColorCb)(led_ctrl_finished_cb cb);
   int (*setColor)(const uint8_t idx, const uint8_t led_num, const uint8_t red, const uint8_t green, const uint8_t blue, const int timeMs);
   int (*setColorAll)(const uint8_t idx, const uint8_t red, const uint8_t green, const uint8_t blue, const int timeMs);
+  int (*startColor)(void);
+  bool (*isColorFinished)(const uint8_t idx, const uint8_t led_num);
   int (*update)(const uint8_t idx);
 };
 

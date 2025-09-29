@@ -30,9 +30,12 @@ struct led_ctrl_config {
 struct led_ctrl_data_buf {
 	uint8_t *current;
 	uint8_t *target;
+	uint8_t *stage;
+	const size_t size;
+	int time;
 	float *step;
 	float *accu;
-	const size_t size;
+	bool ongoing;
 };
 
 struct led_ctrl_data_module {
@@ -46,7 +49,6 @@ struct led_ctrl_data {
 	const size_t module_size;
 	bool color_update_pending;
 	bool brightness_update_pending;
-	bool call_cb;
 	struct k_mutex lock;
 };
 
@@ -66,31 +68,39 @@ static void thread_entry_point(const uint8_t dev_idx, void *dummy0, void *dummy1
 #define LED_CTRL_DATA_MODULE(led_node_id)                                                          \
 	{                                                                                          \
 		.index = DT_PROP_OR(led_node_id, index, DT_NODE_CHILD_IDX(led_node_id)),           \
-	 	.color = {                                                                         \
-			 .current = color_current_##led_node_id,                                   \
-			 .target = color_target_##led_node_id,                                     \
-                         .step = color_step_##led_node_id,                                         \
-                         .accu = color_accu_##led_node_id,                                         \
-			 .size = MIN(ARRAY_SIZE(color_current_##led_node_id),                      \
-				     ARRAY_SIZE(color_target_##led_node_id)),                      \
+	 	.color = {									   \
+			.current = color_current_##led_node_id,                                    \
+			.target = color_target_##led_node_id,                                      \
+			.stage = color_stage_##led_node_id,                                        \
+			.size = MIN(ARRAY_SIZE(color_current_##led_node_id),                       \
+				      ARRAY_SIZE(color_target_##led_node_id)),                     \
+			.time = 0,                                                                 \
+			.step = color_step_##led_node_id,                                          \
+			.accu = color_accu_##led_node_id,                                          \
+			.ongoing = false                                                             \
 		 },                                                                                \
 		.brightness = {                                                                    \
 			.current = brightness_current_##led_node_id,                               \
 			.target = brightness_target_##led_node_id,                                 \
+			.size = MIN(ARRAY_SIZE(brightness_current_##led_node_id),                  \
+					ARRAY_SIZE(brightness_target_##led_node_id)),              \
+			.stage = brightness_stage_##led_node_id,                                   \
+			.time = 0,                                                                 \
                         .step = brightness_step_##led_node_id,                                     \
                         .accu = brightness_accu_##led_node_id,                                     \
-			.size = MIN(ARRAY_SIZE(brightness_current_##led_node_id),                  \
-				ARRAY_SIZE(brightness_target_##led_node_id)),                      \
+                        .ongoing = false                                                             \
 		},                                                                                 \
 	},
 
 #define LED_CTRL_MODULE_BUF(led_node_id, idx)                                                      \
 	static uint8_t color_current_##led_node_id[DT_PROP_LEN_OR(led_node_id, color_mapping, 1)] = {0};  \
 	static uint8_t color_target_##led_node_id[DT_PROP_LEN_OR(led_node_id, color_mapping, 1)] = {0};   \
+	static uint8_t color_stage_##led_node_id[DT_PROP_LEN_OR(led_node_id, color_mapping, 1)] = {0};   \
         static float color_step_##led_node_id[DT_PROP_LEN_OR(led_node_id, color_mapping, 1)] = {1};\
 	static float color_accu_##led_node_id[DT_PROP_LEN_OR(led_node_id, color_mapping, 1)] = {1};\
 	static uint8_t brightness_current_##led_node_id[1] = {0};                                  \
 	static uint8_t brightness_target_##led_node_id[1] = {0};                                   \
+	static uint8_t brightness_stage_##led_node_id[1] = {0};                                    \
 	static float brightness_step_##led_node_id[1] = {1};					   \
 	static float brightness_accu_##led_node_id[1] = {1};
 
@@ -115,7 +125,6 @@ static void thread_entry_point(const uint8_t dev_idx, void *dummy0, void *dummy1
 		  	.module_size = ARRAY_SIZE(led_data_module_##idx),                          \
 		  	.color_update_pending = false,                                             \
 		  	.brightness_update_pending = false,                                        \
-		  	.call_cb = false                                                           \
 		}                                                                                  \
 	},
 
@@ -133,7 +142,8 @@ DT_FOREACH_PROP_ELEM_VARGS(ZEPHYR_USER_NODE, mu_leds, LED_DEVS_CTX, STACKSIZE, P
 static struct led_ctrl_dev led_devs[] = {DT_FOREACH_PROP_ELEM(ZEPHYR_USER_NODE, mu_leds, LED_DEVS)};
 #endif
 
-static led_ctrl_finished_cb finished_cb = NULL;
+static led_ctrl_finished_cb finished_cb_color = NULL;
+static led_ctrl_finished_cb finished_cb_brightness = NULL;
 
 static bool is_color_fade_finished(const uint8_t idx)
 {
@@ -146,7 +156,6 @@ static bool is_color_fade_finished(const uint8_t idx)
 			if (memcmp(data->module[i].color.current, data->module[i].color.target,
 				   data->module[i].color.size) != 0) {
 				finished = false;
-				data->call_cb = true;
 				break;
 			}
 		}
@@ -212,14 +221,6 @@ void thread_loop(const uint8_t dev_idx)
 
 		cf = is_color_fade_finished(dev_idx);
 		bf = is_brightness_fade_finished(dev_idx);
-
-		/* Notify that target reached on device dev_idx */
-		if (data->call_cb && cf && bf) {
-			data->call_cb = false;
-			if (finished_cb != NULL) {
-				finished_cb(dev_idx);
-			}
-		}
 
 		if (cf && bf) {
 			k_sleep(K_MSEC(10));
@@ -290,13 +291,10 @@ static int led_ctrl_set_brightness(const uint8_t idx, const uint8_t led_num, con
 	struct led_ctrl_data *data = &led_devs[idx].data;
 
 	k_mutex_lock(&data->lock, K_FOREVER);
-	data->brightness_update_pending = true;
-	data->module[led_num].brightness.target[0] =
+	data->module[led_num].brightness.ongoing = true;
+	data->module[led_num].brightness.stage[0] =
 		value <= MU_LED_CTRL_BRIGHTNESS_MAX ? value : MU_LED_CTRL_BRIGHTNESS_MAX;
-	calc_progression(data->module[led_num].brightness.current,
-			 data->module[led_num].brightness.target,
-			 data->module[led_num].brightness.step,
-			 data->module[led_num].brightness.accu, timeMs);
+	data->module[led_num].brightness.time = timeMs;
 	k_mutex_unlock(&data->lock);
 	return 0;
 }
@@ -306,21 +304,60 @@ static int led_ctrl_set_brightness_all(const uint8_t idx, const uint8_t value, c
 	__ASSERT(idx >= ARRAY_SIZE(led_devs), "idx is greater than led_devs len");
 	struct led_ctrl_data *data = &led_devs[idx].data;
 
-	k_mutex_lock(&data->lock, K_FOREVER);
-
-	data->brightness_update_pending = true;
-
 	for (int i = 0; i < data->module_size; i++) {
-		data->module[i].brightness.target[0] =
-			value <= MU_LED_CTRL_BRIGHTNESS_MAX ? value : MU_LED_CTRL_BRIGHTNESS_MAX;
-		calc_progression(data->module[i].brightness.current,
-				 data->module[i].brightness.target, data->module[i].brightness.step,
-				 data->module[i].brightness.accu, timeMs);
+		led_ctrl_set_brightness(idx, i, value, timeMs);
 	}
 
-	k_mutex_unlock(&data->lock);
+	return 0;
+}
+
+static int led_ctrl_start_brightness(void)
+{
+	bool pending = false;
+
+	for (int i = 0; i < ARRAY_SIZE(led_devs); i++) {
+
+		struct led_ctrl_data *data = &led_devs[i].data;
+
+		k_mutex_lock(&data->lock, K_FOREVER);
+
+		for (int j = 0; j < data->module_size; j++) {
+
+			if (data->module[j].brightness.target[0] !=
+			    data->module[j].brightness.stage[0]) {
+				pending = true;
+				data->module[j].brightness.target[0] =
+					data->module[j].brightness.stage[0];
+				calc_progression(data->module[j].brightness.current,
+						 data->module[j].brightness.target,
+						 data->module[j].brightness.step,
+						 data->module[j].brightness.accu,
+						 data->module[j].brightness.time);
+			} else {
+
+				if (data->module[j].brightness.ongoing) {
+					pending = true;
+				}
+			}
+		}
+
+		data->brightness_update_pending = pending;
+
+		k_mutex_unlock(&data->lock);
+
+	}
 
 	return 0;
+}
+
+static bool led_ctrl_is_brightness_finished(const uint8_t idx, const uint8_t led_num)
+{
+	struct led_ctrl_data *data = &led_devs[idx].data;
+
+	return data->module[led_num].brightness.target[0] ==
+		       data->module[led_num].brightness.stage[0] &&
+	       data->module[led_num].brightness.target[0] ==
+		       data->module[led_num].brightness.current[0];
 }
 
 static int led_ctrl_set_color(const uint8_t idx, const uint8_t led_num, const uint8_t red,
@@ -330,30 +367,20 @@ static int led_ctrl_set_color(const uint8_t idx, const uint8_t led_num, const ui
 	struct led_ctrl_data *data = &led_devs[idx].data;
 
 	k_mutex_lock(&data->lock, K_FOREVER);
-	data->color_update_pending = true;
+
+	data->module[led_num].color.time = timeMs;
+	data->module[led_num].color.ongoing = true;
 
 	switch (data->module[led_num].color.size) {
 	case 3:
-		data->module[led_num].color.target[2] =
+		data->module[led_num].color.stage[2] =
 			blue <= MU_LED_CTRL_COLOR_MAX ? blue : MU_LED_CTRL_COLOR_MAX;
-		calc_progression(&data->module[led_num].color.current[2],
-				 &data->module[led_num].color.target[2],
-				 &data->module[led_num].color.step[2],
-				 &data->module[led_num].color.accu[2], timeMs);
 	case 2:
-		data->module[led_num].color.target[1] =
+		data->module[led_num].color.stage[1] =
 			green <= MU_LED_CTRL_COLOR_MAX ? green : MU_LED_CTRL_COLOR_MAX;
-		calc_progression(&data->module[led_num].color.current[1],
-				 &data->module[led_num].color.target[1],
-				 &data->module[led_num].color.step[1],
-				 &data->module[led_num].color.accu[1], timeMs);
 	case 1:
-		data->module[led_num].color.target[0] =
+		data->module[led_num].color.stage[0] =
 			red <= MU_LED_CTRL_COLOR_MAX ? red : MU_LED_CTRL_COLOR_MAX;
-		calc_progression(&data->module[led_num].color.current[0],
-				 &data->module[led_num].color.target[0],
-				 &data->module[led_num].color.step[0],
-				 &data->module[led_num].color.accu[0], timeMs);
 	default:
 		break;
 	}
@@ -368,40 +395,85 @@ static int led_ctrl_set_color_all(const uint8_t idx, const uint8_t red, const ui
 	__ASSERT(idx >= ARRAY_SIZE(led_devs), "idx is greater than led_devs len");
 	struct led_ctrl_data *data = &led_devs[idx].data;
 
-	k_mutex_lock(&data->lock, K_FOREVER);
-
-	data->color_update_pending = true;
-
 	for (int i = 0; i < data->module_size; i++) {
-		switch (data->module[i].color.size) {
-		case 3:
-			data->module[i].color.target[2] =
-				blue <= MU_LED_CTRL_COLOR_MAX ? blue : MU_LED_CTRL_COLOR_MAX;
-			calc_progression(&data->module[i].color.current[2],
-					 &data->module[i].color.target[2],
-					 &data->module[i].color.step[2],
-					 &data->module[i].color.accu[2], timeMs);
-		case 2:
-			data->module[i].color.target[1] =
-				green <= MU_LED_CTRL_COLOR_MAX ? green : MU_LED_CTRL_COLOR_MAX;
-			calc_progression(&data->module[i].color.current[1],
-					 &data->module[i].color.target[1],
-					 &data->module[i].color.step[1],
-					 &data->module[i].color.accu[1], timeMs);
-		case 1:
-			data->module[i].color.target[0] =
-				red <= MU_LED_CTRL_COLOR_MAX ? red : MU_LED_CTRL_COLOR_MAX;
-			calc_progression(&data->module[i].color.current[0],
-					 &data->module[i].color.target[0],
-					 &data->module[i].color.step[0],
-					 &data->module[i].color.accu[0], timeMs);
-		default:
-			break;
-		}
+		led_ctrl_set_color(idx, i, red, green, blue, timeMs);
 	}
-	k_mutex_unlock(&data->lock);
 
 	return 0;
+}
+
+
+static bool start_color(struct led_ctrl_data *data, int moduleIdx, int colorIdx)
+{
+	bool pending = false;
+
+	if (data->module[moduleIdx].color.target[colorIdx] != data->module[moduleIdx].color.stage[colorIdx]) {
+		pending = true;
+		data->module[moduleIdx].color.target[colorIdx] = data->module[moduleIdx].color.stage[colorIdx];
+		calc_progression(&data->module[moduleIdx].color.current[colorIdx], &data->module[moduleIdx].color.target[colorIdx],
+				 &data->module[moduleIdx].color.step[colorIdx], &data->module[moduleIdx].color.accu[colorIdx],
+				 data->module[moduleIdx].color.time);
+	}
+
+	return pending;
+}
+
+static int led_ctrl_start_color(void)
+{
+	bool pending = false;
+
+	for (int i = 0; i < ARRAY_SIZE(led_devs); i++) {
+
+		struct led_ctrl_data *data = &led_devs[i].data;
+
+		k_mutex_lock(&data->lock, K_FOREVER);
+
+		for (int j = 0; j < data->module_size; j++) {
+
+			if (data->module[j].color.size == 3) {
+
+				switch (data->module[j].color.size) {
+				case 3:
+					if (start_color(data, j, 2)) {
+						pending = true;
+					}
+				case 2:
+					if (start_color(data, j, 1)) {
+						pending = true;
+					}
+				case 1:
+					if (start_color(data, j, 0)) {
+						pending = true;
+					}
+				default:
+					break;
+				}
+
+				if (pending == false) {
+
+					if (data->module[j].color.ongoing) {
+						pending = true;
+					}
+				}
+			}
+		}
+
+		data->color_update_pending = pending;
+
+		k_mutex_unlock(&data->lock);
+	}
+
+	return 0;
+}
+
+static bool led_ctrl_is_color_finished(const uint8_t idx, const uint8_t led_num)
+{
+	struct led_ctrl_data *data = &led_devs[idx].data;
+
+	return (memcmp(data->module[led_num].color.target, data->module[led_num].color.stage,
+		data->module[led_num].color.size) == 0) &&
+		(memcmp(data->module[led_num].color.target, data->module[led_num].color.current,
+			data->module[led_num].color.size) == 0);
 }
 
 static int led_ctrl_update(const uint8_t idx)
@@ -437,6 +509,15 @@ static int led_ctrl_update(const uint8_t idx)
 					}
 				}
 
+				if ((update || data->module[i].color.ongoing) &&
+				    memcmp(data->module[i].color.current,
+					   data->module[i].color.target,
+					   data->module[i].color.size) == 0) {
+
+					data->module[i].color.ongoing = false;
+					finished_cb_color(idx, i);
+				}
+
 				k_mutex_unlock(&data->lock);
 			}
 		}
@@ -461,6 +542,14 @@ static int led_ctrl_update(const uint8_t idx)
 					break;
 				}
 
+				if ((update || data->module[i].brightness.ongoing) &&
+				    data->module[i].brightness.current[j] ==
+				    data->module[i].brightness.target[j]) {
+
+					data->module[i].brightness.ongoing = false;
+					finished_cb_brightness(idx, i);
+				}
+
 				k_mutex_unlock(&data->lock);
 			}
 		}
@@ -471,15 +560,26 @@ static int led_ctrl_update(const uint8_t idx)
 	return ret;
 }
 
+static int led_ctrl_set_color_cb(led_ctrl_finished_cb cb)
+{
+	finished_cb_color = cb;
+	return 0;
+}
+
+static int led_ctrl_set_brightness_cb(led_ctrl_finished_cb cb)
+{
+	finished_cb_brightness = cb;
+	return 0;
+}
+
 static int led_ctrl_get_dev_qty(void)
 {
 	return ARRAY_SIZE(led_devs);
 }
 
-static int led_ctrl_init(led_ctrl_finished_cb cb)
+static int led_ctrl_init(void)
 {
 	__ASSERT(cb, "led_ctrl_finished_cb cannot be null")
-	finished_cb = cb;
 	return 0;
 }
 
@@ -488,10 +588,16 @@ static int led_ctrl_init(led_ctrl_finished_cb cb)
 struct mu_led_ctrl_if muLedCtrl = {
 	.init = led_ctrl_init,
 	.getDevQty = led_ctrl_get_dev_qty,
+	.setBrightnessCb = led_ctrl_set_brightness_cb,
 	.setBrightness = led_ctrl_set_brightness,
 	.setBrightnessAll = led_ctrl_set_brightness_all,
+	.startBrightness = led_ctrl_start_brightness,
+	.isBrightnessFinished = led_ctrl_is_brightness_finished,
+	.setColorCb = led_ctrl_set_color_cb,
 	.setColor = led_ctrl_set_color,
 	.setColorAll = led_ctrl_set_color_all,
+	.startColor = led_ctrl_start_color,
+	.isColorFinished = led_ctrl_is_color_finished,
 	.update = led_ctrl_update
 };
 
