@@ -232,7 +232,7 @@ static int _get_in_state( const struct mu_input_def* in, int* value )
         // Changed
         if ( data->state != data->old_state )
         {
-            LOG_INF( "'%s' -> %s", in->config.name, ( data->state > 0 ) ? "active" : "inactive" );
+            LOG_DBG( "'%s' -> %s", in->config.name, ( data->state > 0 ) ? "active" : "inactive" );
             data->old_state = data->state;
             ret             = 1;
         }
