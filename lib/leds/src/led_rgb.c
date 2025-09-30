@@ -18,6 +18,9 @@ size_t rgbMapSize;
 static led_rgb_finished_cb userCb = NULL;
 static led_rgb_finished_cb stageUserCb = NULL;
 
+static bool colorFinished = false;
+static bool brightnessFinished = false;
+
 /**
  *
  * @param app_pos Application point of view position
@@ -55,7 +58,7 @@ static int dt_pos_to_app(const uint8_t dev_idx, const uint8_t dt_pos, uint8_t* a
 
 }
 
-static void internalCb(const uint8_t idx, const int led_num)
+static void callUserCb(const uint8_t idx, const int led_num)
 {
 	uint8_t app_pos;
 	int rc = dt_pos_to_app(idx, led_num, &app_pos);
@@ -66,6 +69,24 @@ static void internalCb(const uint8_t idx, const int led_num)
 		}
 	}
 
+}
+
+static void internalColorCb(const uint8_t idx, const int led_num)
+{
+	colorFinished = true;
+
+	if (brightnessFinished) {
+		callUserCb(idx, led_num);
+	}
+}
+
+static void internalBrightnessCb(const uint8_t idx, const int led_num)
+{
+	brightnessFinished = true;
+
+	if (colorFinished) {
+		callUserCb(idx, led_num);
+	}
 }
 
 
@@ -79,7 +100,11 @@ static int mu_led_rgb_init(const struct mu_led_ctrl_if *led_ctrl)
 	__ASSERT(led_ctrl, "led_ctrl shall not be NULL");
 	ctrl = led_ctrl;
 
-	ctrl->setColorCb(internalCb);
+	ctrl->setColorCb(internalColorCb);
+	ctrl->setBrightnessCb(internalBrightnessCb);
+
+	colorFinished = false;
+	brightnessFinished = false;
 
 	return 0;
 }
@@ -162,6 +187,8 @@ static int mu_led_rgb_start(void)
 {
 	int rc = 0;
 	userCb = stageUserCb;
+	colorFinished = false;
+	brightnessFinished = false;
 	rc += ctrl->startColor();
 	rc += ctrl->startBrightness();
 	return rc;

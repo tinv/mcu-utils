@@ -158,6 +158,11 @@ static bool is_color_fade_finished(const uint8_t idx)
 				finished = false;
 				break;
 			}
+
+			if (data->module[i].color.ongoing) {
+				finished = false;
+				break;
+			}
 		}
 	}
 
@@ -179,6 +184,11 @@ static bool is_brightness_fade_finished(const uint8_t idx)
 			if (memcmp(data->module[i].brightness.current,
 				   data->module[i].brightness.target,
 				   data->module[i].brightness.size) != 0) {
+				finished = false;
+				break;
+			}
+
+			if (data->module[i].brightness.ongoing) {
 				finished = false;
 				break;
 			}
