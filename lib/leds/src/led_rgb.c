@@ -100,8 +100,8 @@ static int mu_led_rgb_init(const struct mu_led_ctrl_if *led_ctrl)
 	__ASSERT(led_ctrl, "led_ctrl shall not be NULL");
 	ctrl = led_ctrl;
 
-	ctrl->setColorCb(internalColorCb);
-	ctrl->setBrightnessCb(internalBrightnessCb);
+	ctrl->setRgbLedColorCb(internalColorCb);
+	ctrl->setRgbLedBrightnessCb(internalBrightnessCb);
 
 	colorFinished = false;
 	brightnessFinished = false;

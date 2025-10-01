@@ -142,8 +142,9 @@ DT_FOREACH_PROP_ELEM_VARGS(ZEPHYR_USER_NODE, mu_leds, LED_DEVS_CTX, STACKSIZE, P
 static struct led_ctrl_dev led_devs[] = {DT_FOREACH_PROP_ELEM(ZEPHYR_USER_NODE, mu_leds, LED_DEVS)};
 #endif
 
-static led_ctrl_finished_cb finished_cb_color = NULL;
-static led_ctrl_finished_cb finished_cb_brightness = NULL;
+static led_ctrl_finished_cb finished_cb_rgb_led_color = NULL;
+static led_ctrl_finished_cb finished_cb_rgb_led_brightness = NULL;
+static led_ctrl_finished_cb finished_cb_single_led_brightness = NULL;
 
 static bool is_color_fade_finished(const uint8_t idx)
 {
@@ -525,7 +526,7 @@ static int led_ctrl_update(const uint8_t idx)
 					   data->module[i].color.size) == 0) {
 
 					data->module[i].color.ongoing = false;
-					finished_cb_color(idx, i);
+					finished_cb_rgb_led_color(idx, i);
 				}
 
 				k_mutex_unlock(&data->lock);
@@ -557,7 +558,11 @@ static int led_ctrl_update(const uint8_t idx)
 				    data->module[i].brightness.target[j]) {
 
 					data->module[i].brightness.ongoing = false;
-					finished_cb_brightness(idx, i);
+					if (data->module[i].color.size == 3) {
+						finished_cb_rgb_led_brightness(idx, i);
+					} else {
+						finished_cb_single_led_brightness(idx, i);
+					}
 				}
 
 				k_mutex_unlock(&data->lock);
@@ -570,15 +575,21 @@ static int led_ctrl_update(const uint8_t idx)
 	return ret;
 }
 
-static int led_ctrl_set_color_cb(led_ctrl_finished_cb cb)
+static int led_ctrl_set_rgb_led_color_cb(led_ctrl_finished_cb cb)
 {
-	finished_cb_color = cb;
+	finished_cb_rgb_led_color = cb;
 	return 0;
 }
 
-static int led_ctrl_set_brightness_cb(led_ctrl_finished_cb cb)
+static int led_ctrl_set_rgb_led_brightness_cb(led_ctrl_finished_cb cb)
 {
-	finished_cb_brightness = cb;
+	finished_cb_rgb_led_brightness = cb;
+	return 0;
+}
+
+static int led_ctrl_set_single_led_brightness_cb(led_ctrl_finished_cb cb)
+{
+	finished_cb_single_led_brightness = cb;
 	return 0;
 }
 
@@ -598,12 +609,13 @@ static int led_ctrl_init(void)
 struct mu_led_ctrl_if muLedCtrl = {
 	.init = led_ctrl_init,
 	.getDevQty = led_ctrl_get_dev_qty,
-	.setBrightnessCb = led_ctrl_set_brightness_cb,
+	.setSingleLedBrightnessCb = led_ctrl_set_single_led_brightness_cb,
 	.setBrightness = led_ctrl_set_brightness,
 	.setBrightnessAll = led_ctrl_set_brightness_all,
 	.startBrightness = led_ctrl_start_brightness,
 	.isBrightnessFinished = led_ctrl_is_brightness_finished,
-	.setColorCb = led_ctrl_set_color_cb,
+	.setRgbLedColorCb = led_ctrl_set_rgb_led_color_cb,
+	.setRgbLedBrightnessCb = led_ctrl_set_rgb_led_brightness_cb,
 	.setColor = led_ctrl_set_color,
 	.setColorAll = led_ctrl_set_color_all,
 	.startColor = led_ctrl_start_color,

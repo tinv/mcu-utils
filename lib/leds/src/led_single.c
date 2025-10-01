@@ -164,7 +164,7 @@ static int mu_led_single_init(const struct mu_led_ctrl_if *led_ctrl)
 	__ASSERT(led_ctrl, "led_ctrl shall not be NULL");
 	ctrl = led_ctrl;
 
-	ctrl->setBrightnessCb(internalCb);
+	ctrl->setSingleLedBrightnessCb(internalCb);
 
 	return 0;
 }
