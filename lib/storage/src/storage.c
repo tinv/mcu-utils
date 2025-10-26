@@ -224,7 +224,7 @@ static int muStorage_file_read(const char *fname, uint8_t *buf,
 	int ret, rc, rb;
 
 	fs_file_t_init(&file);
-	rc = fs_open(&file, fname, FS_O_CREATE | FS_O_READ);
+	rc = fs_open(&file, fname, FS_O_READ);
 	if (rc < 0) {
 		LOG_ERR("open %s failed: %d", fname, rc);
 		return rc;
