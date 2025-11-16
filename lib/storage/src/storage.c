@@ -186,7 +186,7 @@ static int muStorage_file_write(const char *fname, const uint8_t *buf,
 	int ret, rc, wb;
 
 	fs_file_t_init(&file);
-	rc = fs_open(&file, fname, FS_O_CREATE | FS_O_WRITE);
+	rc = fs_open(&file, fname, FS_O_CREATE | FS_O_WRITE | FS_O_TRUNC);
 	if (rc < 0) {
 		LOG_ERR("open %s failed: %d", fname, rc);
 		return rc;
