@@ -287,6 +287,15 @@ static int muStorage_directory_exists(const char *path)
 	return 0;
 }
 
+static int muStorage_directory_create(const char *path)
+{
+	int ret = fs_mkdir(path);
+	if (ret != 0) {
+		LOG_ERR("Unable to create %s directory", path);
+	}
+	return ret;
+}
+
 const struct mu_storage_if muStorage = {
 	.init = muStorage_init,
 	.mount = muStorage_mount,
@@ -297,4 +306,5 @@ const struct mu_storage_if muStorage = {
 	.file_exists = muStorage_file_exists,
 	.file_size = muStorage_file_size,
 	.directory_exists = muStorage_directory_exists,
+	.directory_create = muStorage_directory_create,
 };

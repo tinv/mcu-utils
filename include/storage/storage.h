@@ -88,6 +88,13 @@ struct mu_storage_if {
 	 * @return 0 on success, negative errno code on fail.
 	 */
 	int (*directory_exists)(const char *path);
+
+	/**!
+	 *
+	 * @param path
+	 * @return 0 on success, negative errno code on fail.
+	 */
+	int (*directory_create)(const char *path);
 };
 
 extern const struct mu_storage_if muStorage;

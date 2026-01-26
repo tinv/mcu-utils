@@ -49,6 +49,12 @@ static int directory_exists(const char *path)
 	return MuStorageMockObj->directory_exists(path);
 }
 
+static int directory_create(const char *path)
+{
+
+	return MuStorageMockObj->directory_create(path);
+}
+
 const struct mu_storage_if muStorageMock =
 {
 	.init = init,
@@ -60,4 +66,5 @@ const struct mu_storage_if muStorageMock =
 	.file_exists = file_exists,
 	.file_size = file_size,
 	.directory_exists = directory_exists,
+	.directory_create = directory_create,
 };
