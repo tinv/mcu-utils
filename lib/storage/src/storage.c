@@ -257,7 +257,12 @@ static int muStorage_file_remove(const char *fname)
 static int muStorage_file_exists(const char *fname)
 {
 	struct fs_dirent entry;
-	return fs_stat(fname, &entry);
+	int ret = fs_stat(fname, &entry);
+
+	if (ret != 0 && entry.type != FS_DIR_ENTRY_FILE) {
+		return -EINVAL;
+	}
+	return 0;
 }
 
 const struct mu_storage_if muStorage = {
