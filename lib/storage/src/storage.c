@@ -275,6 +275,18 @@ static size_t muStorage_file_size(const char *fname)
 	return entry.size;
 }
 
+static int muStorage_directory_exists(const char *path)
+{
+	struct fs_dirent entry;
+	/*check if publicDir exists*/
+	int ret = fs_stat(path, &entry);
+
+	if (ret != 0 && entry.type != FS_DIR_ENTRY_DIR) {
+		return -EINVAL;
+	}
+	return 0;
+}
+
 const struct mu_storage_if muStorage = {
 	.init = muStorage_init,
 	.mount = muStorage_mount,
@@ -284,4 +296,5 @@ const struct mu_storage_if muStorage = {
 	.file_remove = muStorage_file_remove,
 	.file_exists = muStorage_file_exists,
 	.file_size = muStorage_file_size,
+	.directory_exists = muStorage_directory_exists,
 };

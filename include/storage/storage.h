@@ -81,6 +81,13 @@ struct mu_storage_if {
 	 * @return return size on success, 0 on fail.
 	 */
 	size_t (*file_size)(const char *fname);
+
+	/**!
+	 *
+	 * @param path
+	 * @return 0 on success, negative errno code on fail.
+	 */
+	int (*directory_exists)(const char *path);
 };
 
 extern const struct mu_storage_if muStorage;
