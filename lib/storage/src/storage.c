@@ -265,6 +265,16 @@ static int muStorage_file_exists(const char *fname)
 	return 0;
 }
 
+static size_t muStorage_file_size(const char *fname)
+{
+	struct fs_dirent entry;
+	int ret = fs_stat(fname, &entry);
+	if (ret != 0) {
+		return 0;
+	}
+	return entry.size;
+}
+
 const struct mu_storage_if muStorage = {
 	.init = muStorage_init,
 	.mount = muStorage_mount,
@@ -273,4 +283,5 @@ const struct mu_storage_if muStorage = {
 	.file_read = muStorage_file_read,
 	.file_remove = muStorage_file_remove,
 	.file_exists = muStorage_file_exists,
+	.file_size = muStorage_file_size,
 };

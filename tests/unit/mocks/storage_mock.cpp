@@ -39,6 +39,11 @@ static int file_exists(const char *fname)
 	return MuStorageMockObj->file_exists(fname);
 }
 
+static size_t file_size(const char *fname)
+{
+	return MuStorageMockObj->file_size(fname);
+}
+
 const struct mu_storage_if muStorageMock =
 {
 	.init = init,
@@ -47,5 +52,6 @@ const struct mu_storage_if muStorageMock =
 	.file_write = file_write,
 	.file_read = file_read,
 	.file_remove = file_remove,
-	.file_exists = file_exists
+	.file_exists = file_exists,
+	.file_size = file_size,
 };

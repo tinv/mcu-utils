@@ -74,6 +74,13 @@ struct mu_storage_if {
 	 * @return
 	 */
 	int (*file_exists)(const char *fname);
+
+	/**!
+	 *
+	 * @param fname
+	 * @return return size on success, 0 on fail.
+	 */
+	size_t (*file_size)(const char *fname);
 };
 
 extern const struct mu_storage_if muStorage;
