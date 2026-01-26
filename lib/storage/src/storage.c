@@ -257,7 +257,43 @@ static int muStorage_file_remove(const char *fname)
 static int muStorage_file_exists(const char *fname)
 {
 	struct fs_dirent entry;
-	return fs_stat(fname, &entry);
+	int ret = fs_stat(fname, &entry);
+
+	if (ret != 0 && entry.type != FS_DIR_ENTRY_FILE) {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static size_t muStorage_file_size(const char *fname)
+{
+	struct fs_dirent entry;
+	int ret = fs_stat(fname, &entry);
+	if (ret != 0) {
+		return 0;
+	}
+	return entry.size;
+}
+
+static int muStorage_directory_exists(const char *path)
+{
+	struct fs_dirent entry;
+	/*check if publicDir exists*/
+	int ret = fs_stat(path, &entry);
+
+	if (ret != 0 && entry.type != FS_DIR_ENTRY_DIR) {
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int muStorage_directory_create(const char *path)
+{
+	int ret = fs_mkdir(path);
+	if (ret != 0) {
+		LOG_ERR("Unable to create %s directory", path);
+	}
+	return ret;
 }
 
 const struct mu_storage_if muStorage = {
@@ -268,4 +304,7 @@ const struct mu_storage_if muStorage = {
 	.file_read = muStorage_file_read,
 	.file_remove = muStorage_file_remove,
 	.file_exists = muStorage_file_exists,
+	.file_size = muStorage_file_size,
+	.directory_exists = muStorage_directory_exists,
+	.directory_create = muStorage_directory_create,
 };

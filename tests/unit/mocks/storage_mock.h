@@ -16,6 +16,9 @@ public:
     virtual int file_read(const char *fname, uint8_t *buf, const size_t size) = 0;
     virtual int file_remove(const char *fname) = 0;
     virtual int file_exists(const char *fname) = 0;
+    virtual size_t file_size(const char *fname) = 0;
+    virtual int directory_exists(const char *path) = 0;
+    virtual int directory_create(const char *path) = 0;
 
 };
 
@@ -31,6 +34,9 @@ public:
 		    (override));
 	MOCK_METHOD(int, file_remove, (const char *fname), (override));
 	MOCK_METHOD(int, file_exists, (const char *fname), (override));
+	MOCK_METHOD(size_t, file_size, (const char *fname), (override));
+	MOCK_METHOD(int, directory_exists, (const char *path), (override));
+	MOCK_METHOD(int, directory_create, (const char *path), (override));
 };
 
 extern const struct mu_storage_if muStorageMock;
