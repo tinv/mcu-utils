@@ -24,7 +24,13 @@ static int work_submit(work_handle_t *handle)
 	return 	k_work_submit(&handle->work);
 }
 
+static int work_cancel(work_handle_t *handle)
+{
+	return k_work_cancel(&handle->work);
+}
+
 const struct mu_work_if muWork = {
 	.init = work_init,
 	.submit = work_submit,
+	.cancel = work_cancel
 };

@@ -15,6 +15,11 @@ static int work_submit(work_handle_t *handle)
 	return MuWorkFakeObj->submit(handle);
 }
 
+static int work_cancel(work_handle_t *handle)
+{
+	return MuWorkFakeObj->cancel(handle);
+}
+
 MuWorkFake::MuWorkFake()
 {
 
@@ -33,7 +38,14 @@ int MuWorkFake::submit(work_handle_t *handle)
 	return 0;
 }
 
+int MuWorkFake::cancel(work_handle_t *handle)
+{
+	mHandles.remove(handle);
+	return 0;
+}
+
 struct mu_work_if muWorkFake = {
 	.init = work_init,
 	.submit = work_submit,
+	.cancel = work_cancel
 };

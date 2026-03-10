@@ -13,6 +13,7 @@ class MuWorkInterface
 	virtual ~MuWorkInterface() {}
 	virtual int init(work_handle_t *handle, workCallback cb) = 0;
 	virtual int submit(work_handle_t *handle) = 0;
+	virtual int cancel(work_handle_t *handle) = 0;
 };
 
 class MuWorkFake : public MuWorkInterface
@@ -26,6 +27,7 @@ class MuWorkFake : public MuWorkInterface
 
 	int init(work_handle_t *handle, workCallback cb);
 	int submit(work_handle_t *handle);
+	int cancel(work_handle_t *handle);
 
       private:
 	std::list<work_handle_t *> mHandles;
