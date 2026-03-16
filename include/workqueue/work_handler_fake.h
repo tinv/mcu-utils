@@ -17,6 +17,12 @@ typedef struct {
 	workCallback cb;
 } work_handle_t;
 
+typedef struct {
+	uint64_t expiry;
+	bool active;
+	workCallback cb;
+} work_delayable_handle_t;
+
 #ifdef __cplusplus
 }
 #endif

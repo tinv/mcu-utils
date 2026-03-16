@@ -20,6 +20,9 @@ struct mu_work_if
 	int (*init)(work_handle_t *handle, workCallback cb);
 	int (*submit)(work_handle_t *handle);
 	int (*cancel)(work_handle_t *handle);
+	int (*initDelayable)(work_delayable_handle_t *handle, workCallback cb);
+	int (*reschedule)(work_delayable_handle_t *handle, int msec);
+	int (*cancelDelayable)(work_delayable_handle_t *handle);
 };
 
 extern const struct mu_work_if muWork;

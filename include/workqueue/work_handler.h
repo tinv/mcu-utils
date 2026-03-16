@@ -18,6 +18,11 @@ typedef struct {
 	workCallback cb;
 } work_handle_t;
 
+typedef struct {
+	struct k_work_delayable work;
+	workCallback cb;
+} work_delayable_handle_t;
+
 #ifdef __cplusplus
 }
 #endif
