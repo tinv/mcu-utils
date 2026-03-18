@@ -15,7 +15,7 @@ extern "C"
 struct zbus_channel;
 struct zbus_observer;
 
-typedef void (*zbus_cb_t)(const struct zbus_observer *obj);
+typedef void (*zbus_cb_t)(const struct zbus_channel *obj);
 
 struct zbus_observer_node {
 	const struct zbus_channel *chan;

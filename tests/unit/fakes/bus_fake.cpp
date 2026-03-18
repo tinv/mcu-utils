@@ -57,7 +57,7 @@ int MuBusFake::publish(const struct zbus_channel *chan, const void* msg)
 	// Trigger only observers currently linked to this channel
 	for (auto node : mObservers) {
 		if (node->chan == chan && node->obs->callback) {
-			node->obs->callback(node->obs);
+			node->obs->callback(node->chan);
 		}
 	}
 	return 0;
