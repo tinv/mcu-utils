@@ -3,7 +3,6 @@
  */
 
 #include "fs/fs.h"
-#include <zephyr/fs/storage.h>
 #include <zephyr/kernel.h>
 #include <errno.h>
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
