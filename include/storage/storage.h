@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <zephyr/fs/fs.h>
+#include <fs/fs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,10 +23,11 @@ struct mu_storage_if {
 
 	/**!
 	 * Inizializes Concrete storage
+	 * @param muFs Filesystem interface
 	 * @retval 0 on success
 	 * @retval For other values refert to errno
 	 */
-	int (*init)(void);
+	int (*init)(const struct mu_fs_if *muFs);
 
 	/**!
 	 *

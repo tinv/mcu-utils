@@ -33,6 +33,7 @@ static struct fs_mount_t mp_lfs_storage = {
 struct fs_mount_t *mp_lfs = &FS_FSTAB_ENTRY(PARTITION_NODE);
 #endif
 
+const struct mu_fs_if *fs = NULL;
 
 static void _print_volume_info(struct fs_mount_t* mp)
 {
@@ -90,7 +91,7 @@ static int _mount(struct fs_mount_t* mp)
 	}
 #endif
 
-	if ( ( ret = fs_mount( mp ) ) != 0 )
+	if ( ( ret = fs->mount( mp ) ) != 0 )
 	{
 		LOG_ERR( "mounting error %d: %s", ret,  mp->mnt_point );
 		return ret;
@@ -105,7 +106,7 @@ static int _unmount(struct fs_mount_t* mp)
 {
 	int ret;
 
-	if ( ( ret = fs_unmount( mp ) ) != 0 )
+	if ( ( ret = fs->unmount( mp ) ) != 0 )
 	{
 		LOG_ERR( "unmounting error: %d", ret );
 		return ret;
@@ -115,7 +116,10 @@ static int _unmount(struct fs_mount_t* mp)
 	return 0;
 }
 
-static int muStorage_init(void) {
+static int muStorage_init(const struct mu_fs_if *muFs)
+{
+	__ASSERT_NO_MSG(muFs);
+	fs = muFs;
 	return 0;
 }
 
@@ -186,23 +190,23 @@ static int muStorage_file_write(const char *fname, const uint8_t *buf,
 	int ret, rc, wb;
 
 	fs_file_t_init(&file);
-	rc = fs_open(&file, fname, FS_O_CREATE | FS_O_WRITE | FS_O_TRUNC);
+	rc = fs->open(&file, fname, FS_O_CREATE | FS_O_WRITE | FS_O_TRUNC);
 	if (rc < 0) {
 		LOG_ERR("open %s failed: %d", fname, rc);
 		return rc;
 	}
 
-	wb = fs_write(&file, buf, size);
+	wb = fs->write(&file, buf, size);
 	if (wb < 0) {
 		LOG_ERR("write %s failed: %d", fname, rc);
 	}
 
-	ret = fs_sync(&file);
+	ret = fs->sync(&file);
 	if (ret < 0) {
 		LOG_ERR("sync %s: %d", fname, ret);
 	}
 
-	ret = fs_close(&file);
+	ret = fs->close(&file);
 	if (ret < 0) {
 		LOG_ERR("close %s: %d", fname, ret);
 		return ret;
@@ -224,18 +228,18 @@ static int muStorage_file_read(const char *fname, uint8_t *buf,
 	int ret, rc, rb;
 
 	fs_file_t_init(&file);
-	rc = fs_open(&file, fname, FS_O_READ);
+	rc = fs->open(&file, fname, FS_O_READ);
 	if (rc < 0) {
 		LOG_ERR("open %s failed: %d", fname, rc);
 		return rc;
 	}
 
-	rb = fs_read(&file, buf, size);
+	rb = fs->read(&file, buf, size);
 	if (rb < 0) {
 		LOG_ERR("read %s failed: %d", fname, rc);
 	}
 
-	ret = fs_close(&file);
+	ret = fs->close(&file);
 	if (ret < 0) {
 		LOG_ERR("close %s: %d", fname, ret);
 		return ret;
@@ -251,13 +255,13 @@ static int muStorage_file_read(const char *fname, uint8_t *buf,
 
 static int muStorage_file_remove(const char *fname)
 {
-	return fs_unlink(fname);
+	return fs->unlink(fname);
 }
 
 static int muStorage_file_exists(const char *fname)
 {
 	struct fs_dirent entry;
-	int ret = fs_stat(fname, &entry);
+	int ret = fs->stat(fname, &entry);
 
 	if (ret != 0 && entry.type != FS_DIR_ENTRY_FILE) {
 		return -EINVAL;
@@ -268,7 +272,7 @@ static int muStorage_file_exists(const char *fname)
 static size_t muStorage_file_size(const char *fname)
 {
 	struct fs_dirent entry;
-	int ret = fs_stat(fname, &entry);
+	int ret = fs->stat(fname, &entry);
 	if (ret != 0) {
 		return 0;
 	}
@@ -279,7 +283,7 @@ static int muStorage_directory_exists(const char *path)
 {
 	struct fs_dirent entry;
 	/*check if publicDir exists*/
-	int ret = fs_stat(path, &entry);
+	int ret = fs->stat(path, &entry);
 
 	if (ret != 0 && entry.type != FS_DIR_ENTRY_DIR) {
 		return -EINVAL;
@@ -289,7 +293,7 @@ static int muStorage_directory_exists(const char *path)
 
 static int muStorage_directory_create(const char *path)
 {
-	int ret = fs_mkdir(path);
+	int ret = fs->mkdir(path);
 	if (ret != 0) {
 		LOG_ERR("Unable to create %s directory", path);
 	}

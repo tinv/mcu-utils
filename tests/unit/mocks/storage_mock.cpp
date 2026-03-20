@@ -4,9 +4,9 @@
 
 MuStorageMock* MuStorageMockObj = nullptr;
 
-static int init(void)
+static int init(const struct mu_fs_if *muFs)
 {
-	return MuStorageMockObj->init();
+	return MuStorageMockObj->init(muFs);
 }
 
 static int mount(const mu_storage_config_t *config)
