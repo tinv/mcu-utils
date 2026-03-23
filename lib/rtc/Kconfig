@@ -1,0 +1,7 @@
+# Copyright (c) 2024, TecInvent Electronics Ltd
+# SPDX-License-Identifier: Apache-2.0
+
+config MCU_UTILS_RTC
+	bool "Support for mcu utils rtc library"
+	help
+	  This option enables the 'mcu utils rtc' library
