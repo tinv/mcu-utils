@@ -14,5 +14,6 @@ rsource "adc/Kconfig"
 rsource "hwid/Kconfig"
 rsource "workqueue/Kconfig"
 rsource "bus/Kconfig"
+rsource "rtc/Kconfig"
 
 endmenu

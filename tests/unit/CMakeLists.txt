@@ -14,6 +14,8 @@ set(ZEPHYR_EXTRA_MODULES $ENV{ZEPHYR_BASE}/../mcu-utils/modules/googletest)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
+add_compile_definitions(BUILD_TEST)
+
 project(mcu-utils-unit-tests)
 
 # Necessary for google test
@@ -26,9 +28,11 @@ cmake_path(GET PARENT_DIR PARENT_PATH PRJ_DIR)
 set(SOURCES
 		${PRJ_DIR}/lib/codec/src/cobs.c
 		${PRJ_DIR}/lib/utils/src/hsm.c
+		${PRJ_DIR}/lib/rtc/src/rtc.c
 		main.cpp
         codec/CobsTests.cpp
 		utils/HsmTests.cpp
+		rtc/RtcTests.cpp
 		mocks/hsm_fn_mock.cpp
 )
 
