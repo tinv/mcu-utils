@@ -3,12 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef RTC_CONF_H
-#define RTC_CONF_H
+#ifndef ZRTC_H
+#define ZRTC_H
+#include <zephyr/device.h>
+
+#ifndef BUILD_TEST
+#include <zephyr/drivers/rtc.h>
+#else
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 struct rtc_time {
 	int tm_sec;
 	int tm_min;
@@ -21,8 +28,14 @@ struct rtc_time {
 	int tm_isdst;
 	int tm_nsec;
 };
+
+int rtc_get_time(const struct device *dev, struct rtc_time *tm);
+int rtc_set_time(const struct device *dev, const struct rtc_time *tm);
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif // RTC_CONF_H
+#endif
+
+#endif // ZRTC_H

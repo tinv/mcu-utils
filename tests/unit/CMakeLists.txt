@@ -28,7 +28,7 @@ cmake_path(GET PARENT_DIR PARENT_PATH PRJ_DIR)
 set(SOURCES
 		${PRJ_DIR}/lib/codec/src/cobs.c
 		${PRJ_DIR}/lib/utils/src/hsm.c
-		${PRJ_DIR}/lib/rtc/src/mu_rtc.c
+		${PRJ_DIR}/lib/rtc/src/rtc.c
 		main.cpp
         codec/CobsTests.cpp
 		utils/HsmTests.cpp

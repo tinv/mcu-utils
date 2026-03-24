@@ -3,27 +3,43 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#ifndef RTC_H
-#define RTC_H
-#include <zephyr/device.h>
+#ifndef MU_RTC_H_
+#define MU_RTC_H_
 
-#ifndef BUILD_TEST
-#include <zephyr/drivers/rtc.h>
-#else
-
-#include "rtc_conf.h"
+#include <stdint.h>
+#include "rtc/zrtc.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int rtc_get_time(const struct device *dev, struct rtc_time *tm);
-int rtc_set_time(const struct device *dev, const struct rtc_time *tm);
+struct mu_rtc_if {
+	/**
+	 * Initializes the RTC
+	 * @return Returns 0 on success, otherwise it returns a negative value
+	 */
+	int (*init)(void);
+
+	/**
+	 * Sets the RTC time.
+	 * @param rtc_tm Pointer to the rtc structure containing the values to set.
+	 * @retval 0 on success.
+	 * @retval Negative errno code on failure.
+	 */
+	int (*setDateTime)(struct rtc_time rtc_tm);
+	/**
+	 * Gets the RTC time.
+	 * @param rtc_tm Pointer to the structure where the retrieved time will be stored.
+	 * @retval 0 on success.
+	 * @retval Negative errno code on failure.
+	 */
+	int (*getDateTime)(struct rtc_time *rtc_tm);
+};
+
+extern const struct mu_rtc_if muRtc;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif
-
-#endif // RTC_H
+#endif /* MU_RTC_H_ */

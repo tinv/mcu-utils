@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "rtc/mu_rtc.h"
+#include "rtc/rtc.h"
 #include <errno.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>

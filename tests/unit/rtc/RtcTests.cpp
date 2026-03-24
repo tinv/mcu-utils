@@ -5,7 +5,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <zephyr/device.h>
-#include "rtc/mu_rtc.h"
 #include "rtc/rtc.h"
 #include "rtc_mock.h"
 

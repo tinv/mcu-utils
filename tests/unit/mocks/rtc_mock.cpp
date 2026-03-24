@@ -4,16 +4,26 @@
  */
 
 #include "rtc_mock.h"
-#include "rtc/rtc_conf.h"
 
-RTCMock *RTCMockObj = nullptr;
+MuRtcMock *MuRtcMockObj = nullptr;
 
-int rtc_get_time(const struct device *dev, struct rtc_time *tm)
+static int init()
 {
-	return RTCMockObj->rtc_get_time(dev, tm);
+	return MuRtcMockObj->init();
 }
 
-int rtc_set_time(const struct device *dev, const struct rtc_time *tm)
+static int setDateTime(struct rtc_time rtc_tm)
 {
-	return RTCMockObj->rtc_set_time(dev, tm);
+	return MuRtcMockObj->setDateTime(rtc_tm);
 }
+
+static int getDateTime(struct rtc_time *rtc_tm)
+{
+	return MuRtcMockObj->getDateTime(rtc_tm);
+}
+
+const struct mu_rtc_if muRtcMock = {
+	.init = init,
+	.setDateTime = setDateTime,
+	.getDateTime = getDateTime,
+};
