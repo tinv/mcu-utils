@@ -73,7 +73,7 @@ static int muRtc_getDateTime(struct rtc_time *rtc_tm)
 static int muRtc_setDateTime(struct rtc_time rtc_tm)
 {
 	int ret = 0;
-	if (rtc_tm.tm_year < 1900 || rtc_tm.tm_year > 9999) {
+	if (rtc_tm.tm_year < 0 || rtc_tm.tm_year > 9999 - 1900) {
 		LOG_ERR("year out of bounds");
 		return -EINVAL;
 	}
