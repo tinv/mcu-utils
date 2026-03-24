@@ -1,7 +1,7 @@
-// Copyright 2022 TecInvent Electronics Ltd
-//
-// Created by dina on 17.12.25.
-//
+/*
+ * Copyright (c) 2026 TecInvent Electronics Ltd
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef RTC_CONF_H
 #define RTC_CONF_H

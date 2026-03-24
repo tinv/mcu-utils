@@ -1,7 +1,8 @@
-// Copyright 2022 TecInvent Electronics Ltd
-//
-// Created by dina on 17.12.25.
-//
+/*
+ * Copyright (c) 2026 TecInvent Electronics Ltd
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 #ifndef RTC_H
 #define RTC_H
 #include <zephyr/device.h>
@@ -18,8 +19,6 @@ extern "C" {
 
 int rtc_get_time(const struct device *dev, struct rtc_time *tm);
 int rtc_set_time(const struct device *dev, const struct rtc_time *tm);
-
-
 
 #ifdef __cplusplus
 }

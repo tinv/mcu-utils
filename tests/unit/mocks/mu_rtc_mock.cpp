@@ -1,7 +1,7 @@
-// Copyright 2022 TecInvent Electronics Ltd
-//
-// Created by dina on 15.12.25.
-//
+/*
+ * Copyright (c) 2026 TecInvent Electronics Ltd
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #include "mu_rtc_mock.h"
 
@@ -12,24 +12,18 @@ static int init()
 	return MuRtcMockObj->init();
 }
 
-static int getDateTimeUnix(time_t *unixTime)
+static int setDateTime(struct rtc_time rtc_tm)
 {
-	return MuRtcMockObj->getDateTimeUnix(unixTime);
+	return MuRtcMockObj->setDateTime(rtc_tm);
 }
 
-static int setDateTime(struct mu_rtc_dataTime mu_rtc_dt)
+static int getDateTime(struct rtc_time *rtc_tm)
 {
-	return MuRtcMockObj->setDateTime(mu_rtc_dt);
-}
-
-static int getDateTime(struct mu_rtc_dataTime *mu_rtc_dt)
-{
-	return MuRtcMockObj->getDateTime(mu_rtc_dt);
+	return MuRtcMockObj->getDateTime(rtc_tm);
 }
 
 const struct mu_rtc_if muRtcMock = {
 	.init = init,
-	.getDateTimeUnix = getDateTimeUnix,
 	.setDateTime = setDateTime,
 	.getDateTime = getDateTime,
 };

@@ -1,7 +1,7 @@
-// Copyright 2022 TecInvent Electronics Ltd
-//
-// Created by dina on 15.12.25.
-//
+/*
+ * Copyright (c) 2026 TecInvent Electronics Ltd
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef MU_RTC_MOCK_H
 #define MU_RTC_MOCK_H
@@ -12,21 +12,19 @@
 class MuRtcInterface
 {
       public:
-	virtual ~MuRtcInterface() {};
+	virtual ~MuRtcInterface(){};
 	virtual int init() = 0;
-	virtual int getDateTimeUnix(time_t *unixTime) = 0;
-	virtual int setDateTime(struct mu_rtc_dataTime mu_rtc_dt) = 0;
-	virtual int getDateTime(struct mu_rtc_dataTime *mu_rtc_dt) = 0;
+	virtual int setDateTime(struct rtc_time rtc_tm) = 0;
+	virtual int getDateTime(struct rtc_time *rtc_tm) = 0;
 };
 
-class MuRtcMock: public MuRtcInterface
+class MuRtcMock : public MuRtcInterface
 {
       public:
-	virtual ~MuRtcMock() {};
+	virtual ~MuRtcMock(){};
 	MOCK_METHOD(int, init, (), (override));
-	MOCK_METHOD(int, getDateTimeUnix, (time_t *unixTime), (override));
-	MOCK_METHOD(int, setDateTime, (struct mu_rtc_dataTime mu_rtc_dt), (override));
-	MOCK_METHOD(int, getDateTime, (struct mu_rtc_dataTime *mu_rtc_dt), (override));
+	MOCK_METHOD(int, setDateTime, (struct rtc_time rtc_tm), (override));
+	MOCK_METHOD(int, getDateTime, (struct rtc_time *rtc_tm), (override));
 };
 
 extern const struct mu_rtc_if muRtcMock;

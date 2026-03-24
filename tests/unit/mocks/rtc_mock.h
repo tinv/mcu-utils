@@ -1,8 +1,7 @@
 /*
-* Copyright (c) 2025 TecInvent Electronics Ltd
-* SPDX-License-Identifier: Apache-2.0
-*/
-
+ * Copyright (c) 2026 TecInvent Electronics Ltd
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef RTC_MOCK_H
 #define RTC_MOCK_H
